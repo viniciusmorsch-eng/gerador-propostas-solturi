@@ -1,0 +1,1283 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Propostas Solturi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: ferramenta de duas colunas — formulário à esquerda, folhas A4 da proposta à direita, como uma mesa de trabalho */
+:root {
+  --bg: #ECEEF3;
+  --panel: #FFFFFF;
+  --ink: #1E2440;
+  --muted: #586079;
+  --line: #D8DCE6;
+  --field: #F6F7FA;
+  --accent: #B5560C;
+  --accent-ink: #FFFFFF;
+  --navy: #1450A8;
+  --ok: #2E7350;
+  --desk: #D9DDE6;
+  --font: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151D; --panel: #1A1E29; --ink: #E5E8F1; --muted: #A2A9BF; --line: #2D3345;
+    --field: #141823; --accent: #F0A060; --accent-ink: #1A1E29; --navy: #A9B8EE; --ok: #6CC596; --desk: #0D1016;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151D; --panel: #1A1E29; --ink: #E5E8F1; --muted: #A2A9BF; --line: #2D3345;
+  --field: #141823; --accent: #F0A060; --accent-ink: #1A1E29; --navy: #A9B8EE; --ok: #6CC596; --desk: #0D1016;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 32px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+}
+.bar-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bar-title strong { font-size: 16px; font-weight: 700; color: var(--navy); letter-spacing: .01em; }
+.bar-title span { font-size: 12px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--field); cursor: pointer; font-weight: 600; font-size: 13px;
+}
+.btn:hover { border-color: var(--navy); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn.small { min-height: 32px; padding: 0 10px; font-size: 12px; }
+.btn.ghost { background: transparent; }
+.status { font-size: 12px; color: var(--muted); min-height: 16px; }
+.status.err { color: var(--accent); }
+.status:empty { display: none; }
+
+.layout { display: grid; grid-template-columns: minmax(320px, 430px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.form {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px 20px;
+  display: flex; flex-direction: column; min-width: 0;
+}
+@media (min-width: 921px) {
+  .form { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; }
+}
+details.sec { border-bottom: 1px solid var(--line); }
+details.sec:last-child { border-bottom: 0; }
+details.sec > summary {
+  list-style: none; cursor: pointer; padding: 14px 0; display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--navy);
+}
+details.sec > summary::-webkit-details-marker { display: none; }
+details.sec > summary::after { content: "+"; font-size: 16px; color: var(--muted); }
+details.sec[open] > summary::after { content: "–"; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-bottom: 16px; }
+.fields .full { grid-column: 1 / -1; }
+.f { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.f label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.f input, .f select, .f textarea {
+  width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--field);
+}
+.f textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
+.f input:focus, .f select:focus, .f textarea:focus { border-color: var(--navy); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--navy) 18%, transparent); }
+.hint { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 40px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.mods { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
+.mod { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--field); }
+.mod-head { display: flex; gap: 8px; align-items: center; }
+.mod-letter { flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; background: var(--panel); border: 1px solid var(--line); color: var(--accent); }
+.mod-head input { flex: 1 1 auto; min-width: 0; min-height: 36px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; }
+.mod textarea { width: 100%; min-height: 72px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); resize: vertical; line-height: 1.45; }
+.mod-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.icon-btn { min-width: 36px; min-height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; color: var(--muted); }
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.saved { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
+.saved-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.saved-row div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.saved-row b { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-row span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.saved-empty { font-size: 13px; color: var(--muted); padding: 4px 0 16px; line-height: 1.5; }
+
+.dre-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+[data-tipo][hidden] { display: none !important; }
+.saved-tipo { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent); }
+
+.preview { background: var(--desk); border-radius: 10px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 24px; min-width: 0; overflow: hidden; }
+.sheet { position: relative; flex: none; box-shadow: 0 6px 24px rgba(15, 20, 40, .18); }
+.sheet > .pg { transform-origin: 0 0; position: absolute; top: 0; left: 0; }
+.sheet-label { font-size: 12px; font-weight: 600; color: var(--muted); align-self: center; margin-bottom: -16px; }
+#export-host { position: fixed; left: -12000px; top: 0; width: 794px; pointer-events: none; }
+#export-host .pg { margin-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* ===== Folhas da proposta (cores fixas de impressão) ===== */
+.pg { position: relative; width: 794px; height: 1123px; overflow: hidden; background: #FFFFFF; color: #14203A; font-family: 'Manrope', system-ui, sans-serif; padding: 44px 72px 48px; display: flex; flex-direction: column; font-size: 14px; line-height: 1.4; }
+.pg > * { position: relative; z-index: 1; }
+.pg h1, .pg .pg-h1, .pg .pg-h3, .pg .mont { font-family: 'Montserrat', 'Manrope', system-ui, sans-serif; }
+.pg .pg-h1 { font-weight: 700; letter-spacing: -.02em; }
+.pg-motif { position: absolute !important; z-index: 0 !important; border-radius: 72px; transform: rotate(45deg); pointer-events: none; }
+.pg-bar { position: absolute !important; left: 0; right: 0; bottom: 0; height: 10px; background: #D96A18; }
+.pg * { box-sizing: border-box; }
+.pg p, .pg h1, .pg ul { margin: 0; }
+.pg ul { padding: 0; list-style: none; }
+.pg-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #DCE3EE; }
+.pg-brand { display: flex; align-items: baseline; gap: 10px; }
+.pg-brand b { font-size: 13px; font-weight: 700; letter-spacing: .14em; color: #1450A8; }
+.pg-brand span { font-size: 12px; font-weight: 500; letter-spacing: .12em; color: #B5560C; }
+.pg-ref { font-size: 12px; color: #56607A; }
+.pg-body { flex-grow: 1; display: flex; flex-direction: column; gap: 26px; padding-top: 32px; min-height: 0; }
+.pg-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: .1em; color: #B5560C; }
+.pg-eyebrow i { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #E6EEF9; display: flex; align-items: center; justify-content: center; }
+.pg-titleblock { display: flex; flex-direction: column; gap: 16px; }
+.pg-titlerow { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.pg-h1 { font-weight: 600; font-size: 34px; line-height: 1.2; letter-spacing: -.015em; color: #1450A8; }
+.pg-aside { margin: 0 0 6px !important; width: 250px; font-size: 13px; line-height: 1.5; color: #56607A; text-align: right; }
+.pg-p { font-size: 16px; line-height: 1.6; color: #27304A; }
+.pg-label { font-size: 12px; font-weight: 600; letter-spacing: .1em; color: #56607A; }
+.pg-small { font-size: 14px; line-height: 1.55; color: #465068; }
+.pg-h3 { font-size: 18px; font-weight: 600; color: #1450A8; line-height: 1.2; }
+.pg-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid #DCE3EE; font-size: 12px; color: #56607A; }
+.pg-foot .site { display: flex; align-items: center; gap: 8px; }
+.pg-num { font-weight: 600; letter-spacing: .1em; color: #1450A8; }
+.pg-num em { font-style: normal; color: #B5560C; }
+.pg-li { display: flex; gap: 12px; font-size: 14px; line-height: 1.5; color: #27304A; }
+.pg-li::before { content: ""; flex: none; width: 12px; height: 1.5px; margin-top: 10px; background: #B5560C; }
+.pg-list { display: flex; flex-direction: column; gap: 8px; }
+.tag-ok { flex: none; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #2E7350; }
+.tag-no { flex: none; font-size: 12px; font-weight: 600; color: #6A6F86; background: #EDF0F5; padding: 5px 11px; border-radius: 999px; }
+.pg-band { background: #EEF3FA; padding: 22px 26px; display: flex; flex-direction: column; gap: 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 36px; row-gap: 20px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.kv { display: flex; flex-direction: column; gap: 6px; }
+.kv small { font-size: 12px; color: #56607A; }
+.kv b { font-size: 17px; font-weight: 600; color: #1450A8; line-height: 1.25; }
+.step { display: flex; gap: 20px; }
+.step-rail { width: 34px; display: flex; flex-direction: column; align-items: center; }
+.step-dot { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #1450A8; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: #1450A8; }
+.step-dot.on { background: #B5560C; border-color: #B5560C; color: #FFFFFF; }
+.step-line { flex-grow: 1; width: 1px; min-height: 20px; background: #CBD4E3; }
+.step-txt { flex: 1 1 0; display: flex; flex-direction: column; gap: 3px; padding: 5px 0 12px; }
+.step-txt b { font-size: 15px; font-weight: 700; color: #1450A8; }
+.card { background: #FFFFFF; border: 1px solid #DCE3EE; padding: 22px 24px; }
+.card-dark { background: #1450A8; color: #FFFFFF; padding: 22px 26px; }
+.modrow { display: flex; align-items: center; gap: 20px; padding: 12px 0; border-bottom: 1px solid #E4E9F1; }
+.modrow .lt { width: 30px; flex: none; font-size: 20px; font-weight: 600; line-height: 1.2; color: #B5560C; }
+.modrow.off .lt { color: #A7AFC0; }
+.modrow.off b, .modrow.off .pg-small { color: #6A6F86; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.tbl th { font-size: 12px; font-weight: 600; letter-spacing: .1em; color: #56607A; text-align: right; padding: 0 0 9px; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl thead tr { border-bottom: 1.5px solid #1450A8; }
+.tbl td { padding: 7px 0; text-align: right; border-bottom: 1px solid #E4E9F1; }
+.tbl .base { background: #FDF0E6; padding-left: 10px; padding-right: 10px; }
+.tbl th.base { color: #B5560C; }
+.tbl tr.sum td { background: #EEF3FA; font-weight: 600; color: #1450A8; padding-top: 8px; padding-bottom: 8px; }
+.tbl tr.sum td:first-child { padding-left: 8px; font-weight: 700; }
+.tbl tr.sum td.base { background: #F9E1CC; }
+.tbl tr.minus td { color: #465068; }
+.tbl tr.pay td { font-weight: 600; color: #1450A8; border-bottom: 1.5px solid #1450A8; padding-top: 9px; padding-bottom: 9px; }
+.tbl .hl { color: #B5560C; font-weight: 700; }
+
+.cover { background: #FFFFFF; color: #1450A8; padding: 64px 72px 60px; position: relative; }
+.cover > * { position: relative; }
+.cover h1 { font-family: 'Montserrat', 'Manrope', system-ui, sans-serif; font-weight: 700 !important; }
+.cv-arc { position: absolute !important; border-radius: 50%; }
+</style>
+
+<div class="bar" role="banner">
+  <div class="bar-title">
+    <strong>Propostas Solturi</strong>
+    <span id="bar-sub">Proposta comercial · recarga veicular</span>
+  </div>
+  <div class="actions">
+    <button class="btn" id="btn-new" type="button">Nova proposta</button>
+    <button class="btn" id="btn-save" type="button">Salvar proposta</button>
+    <button class="btn" id="btn-html" type="button" title="Arquivo para abrir no navegador e imprimir">Baixar HTML</button>
+    <button class="btn primary" id="btn-pdf" type="button">Baixar PDF</button>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite" style="flex-basis:100%"></div>
+</div>
+
+<div class="layout">
+  <form class="form" id="form" autocomplete="off" novalidate>
+    <details class="sec" open>
+      <summary>Propostas salvas</summary>
+      <div class="saved" id="saved-list"></div>
+    </details>
+
+    <details class="sec" open>
+      <summary>Proposta</summary>
+      <div class="fields">
+        <div class="f full"><label for="f-tipoprop">Tipo de proposta</label>
+          <select id="f-tipoprop" data-k="tipo"><option value="recarga">Recarga veicular</option><option value="analisador">Analisador de potência</option></select></div>
+        <div class="f"><label for="f-numero">Nº da proposta</label><input id="f-numero" data-k="numero" inputmode="numeric"></div>
+        <div class="f"><label for="f-emissao">Emissão</label><input id="f-emissao" data-k="emissao" placeholder="dd/mm/aaaa"></div>
+        <div class="f full"><label for="f-validade">Validade</label><input id="f-validade" data-k="validade"></div>
+      </div>
+    </details>
+
+    <details class="sec" open>
+      <summary>Cliente</summary>
+      <div class="fields">
+        <div class="f full"><label for="f-cliente">Cliente ou empreendimento</label><input id="f-cliente" data-k="cliente" placeholder="Ex.: Residencial Villa dos Corais"></div>
+        <div class="f full"><label for="f-resp">Responsável (opcional)</label><input id="f-resp" data-k="responsavel" placeholder="Ex.: Marco Agostini"></div>
+        <label class="check full" for="f-infra" data-tipo="recarga"><input type="checkbox" id="f-infra" data-k="infraComum"> Proposta de infraestrutura comum do prédio</label>
+        <div class="f full" data-tipo="recarga"><label for="f-infratxt">Texto exibido na apresentação</label><textarea id="f-infratxt" data-k="infraComumTexto" style="min-height:96px"></textarea></div>
+      </div>
+    </details>
+
+    <details class="sec" open>
+      <summary>Representante</summary>
+      <div class="fields">
+        <div class="f"><label for="f-rep">Nome</label><input id="f-rep" data-k="rep.nome"></div>
+        <div class="f"><label for="f-tel">Telefone</label><input id="f-tel" data-k="rep.tel" inputmode="tel"></div>
+        <div class="f full"><label for="f-cargo">Cargo</label><input id="f-cargo" data-k="rep.cargo"></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="analisador" open>
+      <summary>Medição</summary>
+      <div class="fields">
+        <div class="f full"><label for="a-ponto">Ponto de instalação</label><input id="a-ponto" data-k="an.ponto" list="dl-ponto"></div>
+        <div class="f"><label for="a-alim">Alimentação</label><input id="a-alim" data-k="an.alimentacao" list="dl-alim"></div>
+        <div class="f"><label for="a-modelo">Modelo do analisador</label><input id="a-modelo" data-k="an.modelo"></div>
+        <div class="f"><label for="a-dias">Período de registro (dias)</label><input id="a-dias" data-k="an.dias" inputmode="numeric"></div>
+        <div class="f"><label for="a-int">Intervalo de integração (min)</label><input id="a-int" data-k="an.intervalo" inputmode="numeric"></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="analisador" open>
+      <summary>Valor e condições</summary>
+      <div class="fields">
+        <div class="f"><label for="a-valor">Valor total (R$)</label><input id="a-valor" data-k="valor" inputmode="decimal" placeholder="0,00"></div>
+        <div class="f"><label for="a-parc">Parcelamento (até x vezes)</label><input id="a-parc" data-k="an.parcelas" inputmode="numeric"></div>
+        <div class="f"><label for="a-pinst">Prazo de instalação (dias úteis)</label><input id="a-pinst" data-k="an.prazoInstal" inputmode="numeric"></div>
+        <div class="f"><label for="a-prel">Prazo do relatório (dias úteis)</label><input id="a-prel" data-k="an.prazoRel" inputmode="numeric"></div>
+        <div class="f full"><label for="a-nao">Não incluso (um item por linha)</label><textarea id="a-nao" data-k="an.naoIncluso"></textarea>
+          <span class="hint">Com parcelamento em 1 vez, a proposta mostra só o pagamento à vista.</span></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>Condições do local</summary>
+      <div class="fields">
+        <div class="f"><label for="f-circ">Circuito necessário</label><input id="f-circ" data-k="site.circuito" placeholder="Ex.: 63 A"></div>
+        <div class="f"><label for="f-pontos">Pontos de recarga</label><input id="f-pontos" data-k="site.pontos" placeholder="Ex.: 2 pontos"></div>
+        <div class="f"><label for="f-tipo">Tipo de local</label><input id="f-tipo" data-k="site.tipo" list="dl-tipo"></div>
+        <div class="f"><label for="f-alim">Alimentação</label><input id="f-alim" data-k="site.alimentacao" list="dl-alim"></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>Estação e plataforma</summary>
+      <div class="fields">
+        <label class="check full" for="f-carr"><input type="checkbox" id="f-carr" data-k="carregador"> Incluir carregador na proposta</label>
+        <div class="f"><label for="f-qtd">Quantidade</label><input id="f-qtd" data-k="estacao.qtd" inputmode="numeric"></div>
+        <div class="f"><label for="f-pot">Potência</label><input id="f-pot" data-k="estacao.potencia" placeholder="Ex.: 120 kW"></div>
+        <div class="f"><label for="f-corr">Corrente</label>
+          <select id="f-corr" data-k="estacao.corrente"><option value="CA">Alternada (CA)</option><option value="CC">Contínua (CC)</option></select></div>
+        <div class="f"><label for="f-con">Conectores</label><input id="f-con" data-k="estacao.conectores" placeholder="Ex.: Dois conectores CCS2"></div>
+        <div class="f full"><label for="f-plat">Plataforma de cobrança e gestão</label><input id="f-plat" data-k="plataforma" list="dl-plat"></div>
+        <label class="check full" for="f-smart"><input type="checkbox" id="f-smart" data-k="smart"> Smart Charging incluso no valor</label>
+        <label class="check full" for="f-totem"><input type="checkbox" id="f-totem" data-k="totem"> Exibir totem como opcional (sem valor)</label>
+        <div class="f full"><label for="f-totemdesc">Descrição do totem</label><input id="f-totemdesc" data-k="totemDesc"></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>O que o valor cobre</summary>
+      <div class="mods" id="mods"></div>
+      <div style="padding-bottom:16px"><button class="btn small" type="button" id="btn-addmod">Adicionar grupo</button></div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>Valor e condições</summary>
+      <div class="fields">
+        <div class="f"><label for="f-valor">Valor total (R$)</label><input id="f-valor" data-k="valor" inputmode="decimal" placeholder="188.946,00"></div>
+        <div class="f"><label for="f-abr">O valor se refere a</label>
+          <select id="f-abr" data-k="abrangencia"><option value="">Não informar</option><option value="todo">Todo o empreendimento</option><option value="bloco">Cada bloco ou torre</option><option value="unidade">Cada unidade (casa ou apartamento)</option><option value="vaga">Cada vaga</option><option value="estacao">Cada estação de recarga</option></select></div>
+        <div class="f"><label for="f-gar">Garantia do produto (meses)</label><input id="f-gar" data-k="garantiaProduto" inputmode="numeric"></div>
+        <div class="f"><label for="f-prazo">Prazo de execução (dias)</label><input id="f-prazo" data-k="prazo" inputmode="numeric"></div>
+        <div class="f full"><label for="f-nao">Não incluso (um item por linha)</label><textarea id="f-nao" data-k="naoIncluso"></textarea>
+          <span class="hint">Quando o Smart Charging não está incluso, ele entra nesta lista automaticamente.</span></div>
+      </div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>Itens orçados</summary>
+      <div class="fields" style="padding-bottom:8px">
+        <label class="check full" for="f-itens"><input type="checkbox" id="f-itens" data-k="itens.ativo"> Incluir página de itens orçados</label>
+        <span class="hint full">Um item por linha. Ex.: Eletrocalha perfurada 100x50 mm com tampa</span>
+      </div>
+      <div class="mods" id="grupos"></div>
+      <div style="padding-bottom:16px"><button class="btn small" type="button" id="btn-addgrp">Adicionar grupo de itens</button></div>
+    </details>
+
+    <details class="sec" data-tipo="recarga">
+      <summary>Estimativa de retorno (DRE)</summary>
+      <div class="fields">
+        <label class="check full" for="f-dre"><input type="checkbox" id="f-dre" data-k="retorno.ativo"> Incluir página de retorno</label>
+        <div class="f"><label for="f-preco">Preço de venda (R$/kWh)</label><input id="f-preco" data-k="retorno.preco" inputmode="decimal"></div>
+        <div class="f"><label for="f-custo">Custo da energia (R$/kWh)</label><input id="f-custo" data-k="retorno.custo" inputmode="decimal"></div>
+        <div class="f"><label for="f-kwh">kWh por recarga</label><input id="f-kwh" data-k="retorno.kwhRecarga" inputmode="decimal"></div>
+        <div class="f"><label for="f-imp">Impostos (%)</label><input id="f-imp" data-k="retorno.impostos" inputmode="decimal"></div>
+        <div class="f"><label for="f-take">Take rate (%)</label><input id="f-take" data-k="retorno.take" inputmode="decimal"></div>
+        <div class="f"><label for="f-ir">IRPJ/CSLL (%)</label><input id="f-ir" data-k="retorno.ir" inputmode="decimal"></div>
+        <div class="full">
+          <span class="hint" style="display:block;margin-bottom:8px">Recargas por mês em cada cenário</span>
+          <div class="dre-grid">
+            <div class="f"><label for="f-c1">Conservador</label><input id="f-c1" data-k="retorno.c1" inputmode="numeric"></div>
+            <div class="f"><label for="f-c2">Base</label><input id="f-c2" data-k="retorno.c2" inputmode="numeric"></div>
+            <div class="f"><label for="f-c3">Otimista</label><input id="f-c3" data-k="retorno.c3" inputmode="numeric"></div>
+          </div>
+        </div>
+        <span class="hint full">O payback é calculado sobre o valor total da proposta.</span>
+      </div>
+    </details>
+  </form>
+
+  <section class="preview" id="preview" aria-label="Prévia da proposta"></section>
+</div>
+
+<div id="export-host" aria-hidden="true"></div>
+
+<datalist id="dl-tipo"><option value="Condomínio residencial"><option value="Comercial"><option value="Posto de combustível"><option value="Farmácia"><option value="Estacionamento"><option value="Centro comercial"><option value="Hotel"><option value="Indústria"></datalist>
+<datalist id="dl-alim"><option value="Trifásica"><option value="Bifásica"><option value="Monofásica"></datalist>
+<datalist id="dl-ponto"><option value="Quadro geral de entrada"><option value="Quadro de distribuição"><option value="Quadro de medição"></datalist>
+<datalist id="dl-plat"><option value="TUPI"><option value="WEMOB"><option value="STATION"></datalist>
+
+<script>
+(function () {
+  "use strict";
+  const DRAFT_KEY = "solturi-proposta-rascunho-v1";
+  const FIRST_NUMBER = 203;
+  const PAGE_W = 794, PAGE_H = 1123;
+
+  const DEFAULT_NAO = [
+    "Adequação e disponibilização de rede Wi-Fi",
+    "Intervenções na subestação de energia",
+    "Materiais e serviços não listados no escopo"
+  ].join("\n");
+
+  const DEFAULT_NAO_AN = [
+    "Adequações no quadro ou na entrada de energia",
+    "Medições em pontos além do quadro geral",
+    "Execução das recomendações do relatório",
+    "Projetos elétricos e ART de obras futuras",
+    "Período adicional de medição (opcional)"
+  ].join("\n");
+
+  function today() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+  }
+
+  function blank(numero) {
+    return {
+      tipo: "recarga",
+      numero: numero != null ? String(numero) : String(FIRST_NUMBER),
+      numeroAuto: true,
+      an: { ponto: "Quadro geral de entrada", alimentacao: "Trifásica", modelo: "", dias: "7", intervalo: "10", parcelas: "2", prazoInstal: "10", prazoRel: "5", naoIncluso: DEFAULT_NAO_AN },
+      emissao: today(),
+      validade: "15 dias úteis",
+      cliente: "",
+      responsavel: "",
+      rep: { nome: "", tel: "", cargo: "Representante comercial" },
+      site: { circuito: "", pontos: "", tipo: "Comercial", alimentacao: "Trifásica" },
+      estacao: { qtd: "1", potencia: "", corrente: "CA", conectores: "" },
+      plataforma: "TUPI",
+      smart: false,
+      carregador: true,
+      totem: false,
+      totemDesc: "Totem de piso para fixação da estação de recarga",
+      modulos: [
+        { titulo: "Infraestrutura elétrica", itens: "Quadro dedicado às estações de recarga\nProteções: disjuntores, DR tipo B e DPS\nCabos, eletrodutos e aterramento", incluso: true },
+        { titulo: "Estação de recarga", itens: "", incluso: true, auto: true },
+        { titulo: "Serviços", itens: "Projeto elétrico e ART\nInstalação e comissionamento\nConfiguração da plataforma", incluso: true }
+      ],
+      valor: "",
+      prazo: "60",
+      garantiaProduto: "12",
+      infraComum: false,
+      abrangencia: "",
+      infraComumTexto: "Esta proposta trata exclusivamente da infraestrutura elétrica comum do prédio: quadro, alimentação e eletrocalhas passadas pelas áreas comuns da garagem. Não estão incluídas esperas, circuitos ou pontos de ligação nas vagas.",
+      naoIncluso: DEFAULT_NAO,
+      itens: { ativo: false, grupos: [
+        { titulo: "Infraestrutura de eletrocalha", itens: "", valor: "" },
+        { titulo: "Cabeamentos de alimentação", itens: "", valor: "" },
+        { titulo: "Quadro de comando", itens: "", valor: "" },
+        { titulo: "Sistema Smart Charging", itens: "", valor: "" }
+      ] },
+      retorno: { ativo: false, preco: "1,89", custo: "0,75", kwhRecarga: "19,26", impostos: "7,5", take: "10", ir: "24", c1: "278", c2: "556", c3: "741" }
+    };
+  }
+
+  function normalize(s) {
+    const b = blank(s && s.numero);
+    const out = Object.assign({}, b, s || {});
+    if (out.tipo !== "analisador") out.tipo = "recarga";
+    ["rep", "site", "estacao", "retorno", "an"].forEach(function (k) { out[k] = Object.assign({}, b[k], (s && s[k]) || {}); });
+    if (!Array.isArray(out.modulos) || !out.modulos.length) out.modulos = b.modulos;
+    out.itens = Object.assign({}, b.itens, (s && s.itens) || {});
+    if (out.infraComumTexto === "Esta proposta trata da instalação da infraestrutura elétrica comum do prédio, que atende às áreas comuns e prepara as vagas de garagem para receber estações de recarga de veículos elétricos.") out.infraComumTexto = b.infraComumTexto;
+    if (!Array.isArray(out.itens.grupos)) out.itens.grupos = b.itens.grupos;
+    return out;
+  }
+
+  /* ---------- helpers ---------- */
+  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function num(v) { if (v == null) return NaN; const s = String(v).trim().replace(/\s/g, "").replace(/R\$/i, ""); if (!s) return NaN; const t = s.indexOf(",") >= 0 ? s.replace(/\./g, "").replace(",", ".") : s; return Number(t); }
+  function fmt(n, d) { return n.toLocaleString("pt-BR", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function money(n, d) { return "R$ " + fmt(n, d == null ? 0 : d); }
+  function or(v, ph) { const t = String(v == null ? "" : v).trim(); return t ? esc(t) : "[" + esc(ph) + "]"; }
+  function lines(t) { return String(t || "").split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function getPath(o, p) { return p.split(".").reduce(function (a, k) { return a == null ? a : a[k]; }, o); }
+  function setPath(o, p, v) { const ks = p.split("."); let c = o; for (let i = 0; i < ks.length - 1; i++) { if (c[ks[i]] == null) c[ks[i]] = {}; c = c[ks[i]]; } c[ks[ks.length - 1]] = v; }
+
+  /* ---------- state ---------- */
+  let state = null;
+  try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) state = normalize(JSON.parse(raw)); } catch (e) { state = null; }
+  if (!state) state = blank(null);
+  let nextNumber = FIRST_NUMBER;
+
+  function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) { /* sem armazenamento local */ } }
+
+  /* ---------- derived ---------- */
+  function stationQty() { const q = parseInt(state.estacao.qtd, 10); return isNaN(q) || q < 1 ? 1 : q; }
+  function stationLine() {
+    const q = stationQty();
+    const pot = String(state.estacao.potencia || "").trim();
+    const cc = state.estacao.corrente === "CC";
+    return q + (q > 1 ? " estações de recarga" : " estação de recarga") + (cc ? " rápida" : "") + (pot ? " de " + pot : " de [potência]") + (cc ? " (CC)" : " (CA)");
+  }
+  function moduleItems(m) {
+    if (m.auto) {
+      const arr = [stationLine()];
+      if (String(state.estacao.conectores || "").trim()) arr.push(String(state.estacao.conectores).trim()); else arr.push("[conectores]");
+      return arr;
+    }
+    return lines(m.itens);
+  }
+  const ABR = { todo: "Valor para todo o empreendimento", bloco: "Valor por bloco ou torre", unidade: "Valor por unidade (casa ou apartamento)", vaga: "Valor por vaga", estacao: "Valor por estação de recarga" };
+  function abrTxt() { return ABR[state.abrangencia] || ""; }
+  function hasCharger() { return state.carregador !== false; }
+  function visibleModules() { return state.modulos.filter(function (m) { return hasCharger() || !m.auto; }); }
+  function naoList() {
+    const arr = lines(state.naoIncluso);
+    if (state.infraComum && !arr.some(function (x) { return /espera|vaga/i.test(x); })) arr.unshift("Esperas, circuitos e pontos de ligação nas vagas");
+    if (!hasCharger() && !arr.some(function (x) { return /carregador|esta[cç][aã]o de recarga|esta[cç][oõ]es de recarga/i.test(x); })) arr.unshift("Estações de recarga (carregadores)");
+    if (!state.smart && !arr.some(function (x) { return /smart charging/i.test(x); })) arr.push("Sistema Smart Charging (opcional)");
+    return arr;
+  }
+  function valorTxt() { const v = num(state.valor); return isNaN(v) ? "R$ [valor]" : money(v, 2); }
+  function clienteTxt() { return or(state.cliente, "Nome do cliente"); }
+  function plat() { return String(state.plataforma || "").trim() || "[plataforma]"; }
+
+  function dre() {
+    const r = state.retorno;
+    const preco = num(r.preco), custo = num(r.custo), kwhR = num(r.kwhRecarga), imp = num(r.impostos) / 100, take = num(r.take) / 100, ir = num(r.ir) / 100;
+    const inv = num(state.valor);
+    return [r.c1, r.c2, r.c3].map(function (c) {
+      const rec = num(c);
+      const kwh = rec * kwhR, bruta = kwh * preco, impostos = bruta * imp, liq = bruta - impostos;
+      const energia = kwh * custo, takeV = bruta * take, ebitda = liq - energia - takeV, irV = ebitda * ir, lucro = ebitda - irV;
+      return { rec: rec, dia: rec / 30, kwh: kwh, bruta: bruta, impostos: impostos, liq: liq, energia: energia, take: takeV, ebitda: ebitda, ir: irV, lucro: lucro, ano: lucro * 12, payback: inv / lucro };
+    });
+  }
+
+  /* ---------- icons ---------- */
+  const IC = {
+    leaf: '<path d="M4 20C4 10.5 10.5 4 20 4c0 9.5-6.5 16-16 16z"></path><path d="M4 20l6-6"></path>',
+    bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path>',
+    gauge: '<path d="M4 18a8 8 0 1 1 16 0"></path><path d="M12 18l4-6"></path>',
+    clip: '<path d="M9 4h6v3H9z"></path><path d="M7 5H5v16h14V5h-2"></path><path d="M8 12h8M8 16h5"></path>',
+    trend: '<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>',
+    bars: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>',
+    doc: '<path d="M6 3h9l4 4v14H6z"></path><path d="M9 14l2 2 4-4"></path>',
+    shield: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path>',
+    user: '<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path>',
+    check: '<path d="M5 12l5 5 9-10"></path>',
+    panel: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M13 10l-2.5 4h3L11 18"></path>',
+    charger: '<rect x="4" y="3" width="10" height="18" rx="2"></rect><path d="M7 7h4"></path><path d="M9.8 10.5l-1.6 3h2.4l-1.6 3"></path><path d="M14 10h2a2 2 0 0 1 2 2v4.5a1.5 1.5 0 0 0 3 0V8l-2-2"></path>',
+    totem: '<rect x="8" y="3" width="8" height="14" rx="1.5"></rect><path d="M10.5 7h3"></path><path d="M12 17v4"></path><path d="M7 21h10"></path>',
+    tray: '<path d="M3 8v8h18V8"></path><path d="M3 12h18"></path><path d="M8 8v8M13 8v8M18 8v8"></path>',
+    cable: '<path d="M8 3v4M16 3v4"></path><path d="M6 7h12v3a6 6 0 0 1-12 0z"></path><path d="M12 16v2a3 3 0 0 0 3 3h5"></path>',
+    wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>',
+    sun: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"></path>',
+    alert: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M12 8v5M12 16v.5"></path>'
+  };
+  function iconFor(m) {
+    const t = String(m.titulo || "").toLowerCase();
+    if (m.auto || /esta[cç]/.test(t) || /carregador/.test(t)) return "charger";
+    if (/totem|pedestal/.test(t)) return "totem";
+    if (/smart|gest[aã]o de carga/.test(t)) return "gauge";
+    if (/eletrocalha|calha|eletroduto|leito|perfilado/.test(t)) return "tray";
+    if (/cabo|cabea|condutor|alimenta/.test(t)) return "cable";
+    if (/infra|el[eé]tric|quadro|comando|painel/.test(t)) return "panel";
+    if (/servi|instala|projeto|m[aã]o de obra|comissiona/.test(t)) return "wrench";
+    if (/smart|gest[aã]o de carga/.test(t)) return "gauge";
+    return "clip";
+  }
+  function badge(m, size) {
+    const on = m.incluso;
+    return '<span style="width:' + size + 'px;height:' + size + 'px;flex:none;border-radius:50%;background:' + (on ? "#FDF0E6" : "#EDF0F5") + ';display:flex;align-items:center;justify-content:center">' + svg(iconFor(m), Math.round(size * 0.5), on ? "#B5560C" : "#8A93A8", 1.8) + '</span>';
+  }
+  function svg(name, size, color, sw) { return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="' + (sw || 1.9) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[name] + '</svg>'; }
+  const OK = '<span class="tag-ok">' + svg("check", 13, "#2E7350", 2.2) + 'Incluso</span>';
+  const NO = '<span class="tag-no">Não incluso</span>';
+  const OPT = '<span class="tag-no" style="background:#FDF0E6;color:#A14D0B">Opcional</span>';
+
+  const LOGO_AZUL = "data:image/png;base64,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";
+  const LOGO_BRANCA = "data:image/png;base64,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";
+  function logo(src, w) { return '<img src="' + src + '" alt="Solturi Energia Solar WEG" style="display:block;width:' + w + 'px;height:auto">'; }
+  const MOTIF = '<div class="pg-motif" style="right:-230px;top:-210px;width:420px;height:420px;border:1.5px solid #E6EDF7"></div><div class="pg-motif" style="left:-300px;bottom:-170px;width:460px;height:460px;border:1.5px solid #FBE9DA"></div>';
+  /* ---------- page parts ---------- */
+  function top() {
+    return '<div class="pg-top">' + logo(LOGO_AZUL, 92) + '<span class="pg-ref">Proposta Nº ' + or(state.numero, "000") + ' · ' + clienteTxt() + '</span></div>';
+  }
+  function foot(n, total, extra) {
+    const left = extra || ('<span class="site"><b style="font-weight:600;color:#1450A8">Solturi Energia Solar</b> · solturi.com.br</span>');
+    return '<div class="pg-foot">' + left + '<span class="pg-num"><em>' + String(n).padStart(2, "0") + '</em> / ' + String(total).padStart(2, "0") + '</span></div>';
+  }
+  function eyebrow(icon, sec, label) {
+    return '<div class="pg-eyebrow"><i>' + svg(icon, 15, "#1450A8") + '</i><b style="font-weight:800">' + String(sec).padStart(2, "0") + '</b><span>' + label + '</span></div>';
+  }
+  function page(inner, n, total, extraFoot, bodyStyle) {
+    return '<div class="pg">' + MOTIF + top() + '<div class="pg-body"' + (bodyStyle ? ' style="' + bodyStyle + '"' : '') + '>' + inner + '</div>' + foot(n, total, extraFoot) + '<div class="pg-bar"></div></div>';
+  }
+
+  function pCover() {
+    const resp = String(state.responsavel || "").trim();
+    const who = resp ? '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + esc(resp) + '</b><span style="font-size:13px;line-height:1.35;color:#5B6382">' + clienteTxt() + '</span>'
+      : '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + clienteTxt() + '</b>';
+    const meta = function (l, v) { return '<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#6A6F86">' + l + '</span>' + v + '</div>'; };
+    const val = function (v) { return '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + v + '</b>'; };
+    return '<div class="pg cover">' +
+      '<div class="cv-arc" style="right:-330px;top:-330px;width:760px;height:760px;border-radius:150px;transform:rotate(45deg);border:1.5px solid #D96A18;opacity:.45"></div>' +
+      '<div class="cv-arc" style="right:-250px;top:-250px;width:600px;height:600px;border-radius:120px;transform:rotate(45deg);background:linear-gradient(90deg,#D96A18 0%,#7A5F6A 45%,#1450A8 100%)"></div>' +
+      '<div class="cv-arc" style="left:-360px;top:420px;width:520px;height:520px;border-radius:110px;transform:rotate(45deg);border:1.5px solid #E6EDF7"></div>' +
+      '<div class="cv-arc" style="left:0;right:0;bottom:0;height:12px;border-radius:0;background:#D96A18"></div>' +
+      '<svg style="position:absolute;left:620px;top:96px" width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10.5 10.5 4 20 4c0 9.5-6.5 16-16 16z"></path><path d="M4 20l6-6"></path><path d="M13.5 8.5l-3 4.5h3l-2 4"></path></svg>' +
+      '<svg style="position:absolute;right:72px;bottom:196px" width="330" height="134" viewBox="0 0 330 134" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 120H330" stroke="#DCE3EE" stroke-width="1.2"></path><path d="M14 100V86c0-10 4-12 12-14l36-4c12-12 26-22 42-22h56c14 0 28 8 38 18l16 6c6 2 8 6 8 14v16" stroke="#1450A8" stroke-width="1.8"></path><path d="M14 100h26M72 100h88M192 100h28" stroke="#1450A8" stroke-width="1.8"></path><circle cx="56" cy="102" r="14" stroke="#1450A8" stroke-width="1.8"></circle><circle cx="56" cy="102" r="4" stroke="#1450A8" stroke-width="1.5"></circle><circle cx="176" cy="102" r="14" stroke="#1450A8" stroke-width="1.8"></circle><circle cx="176" cy="102" r="4" stroke="#1450A8" stroke-width="1.5"></circle><path d="M80 68c8-9 18-14 28-14h50c10 0 18 5 26 14z" stroke="#1450A8" stroke-width="1.5"></path><path d="M130 54v14" stroke="#1450A8" stroke-width="1.5"></path><rect x="268" y="36" width="36" height="84" rx="5" stroke="#1450A8" stroke-width="1.8"></rect><rect x="276" y="46" width="20" height="14" rx="2" stroke="#1450A8" stroke-width="1.5"></rect><path d="M287 68l-4 7h6l-4 7" stroke="#D96A18" stroke-width="1.8"></path><path d="M268 84c-20 0-26 22-46 10" stroke="#D96A18" stroke-width="1.8"></path><path d="M286 30c0-10 6-16 16-16 0 10-6 16-16 16z" stroke="#D96A18" stroke-width="1.6"></path><path d="M286 30l7-7" stroke="#D96A18" stroke-width="1.6"></path></svg>' +
+      logo(LOGO_AZUL, 230) +
+      '<div style="flex-grow:1"></div>' +
+      '<div style="display:flex;flex-direction:column;gap:24px;max-width:450px">' +
+        '<div style="display:flex;align-items:center;gap:14px"><span style="display:block;width:40px;height:2px;background:#B5560C"></span><span style="font-size:13px;font-weight:600;letter-spacing:.12em;color:#B5560C">PROPOSTA COMERCIAL' + (state.infraComum ? ' · INFRAESTRUTURA COMUM' : '') + '</span></div>' +
+        '<h1 style="margin:0;font-weight:600;font-size:46px;line-height:1.14;letter-spacing:-.02em;color:#1450A8">Recarga veicular <span style="color:#D96A18">sob medida.</span></h1>' +
+        '<p style="margin:0;font-size:17px;line-height:1.6;color:#5B6382;max-width:400px">' + (hasCharger() ? 'Estações de recarga, infraestrutura elétrica dedicada e gerenciamento inteligente de carga para o seu empreendimento.' : 'Infraestrutura elétrica dedicada à recarga de veículos elétricos, pronta para receber as estações do seu empreendimento.') + '</p>' +
+        '<div style="display:flex"><span style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#E6EEF9;border:1px solid #C9D8F0;font-size:12px;font-weight:600;letter-spacing:.04em;color:#1450A8">' + svg("leaf", 14, "#1450A8", 2) + 'Mobilidade elétrica · Energia limpa</span></div>' +
+      '</div>' +
+      '<div style="flex-grow:1.2"></div>' +
+      '<div style="display:flex;gap:20px;padding-bottom:14px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#5B6382">INTEGRADORA 5 ESTRELAS WEG</span>' + (state.smart ? '<span style="font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B6382">WEMOB® SMART CHARGING</span>' : '') + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid #DCE3EE;padding-top:22px">' +
+        meta("PREPARADA PARA", who) + meta("PROPOSTA Nº", val(or(state.numero, "000"))) + meta("EMISSÃO", val(or(state.emissao, "dd/mm/aaaa"))) + meta("VALIDADE", val(or(state.validade, "validade"))) +
+      '</div></div>';
+  }
+
+  function pApresentacao(sec, n, t) {
+    const resp = String(state.responsavel || "").trim();
+    const comp = function (icon, title, txt) {
+      return '<div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:30px;height:30px;border-radius:50%;background:#E6EEF9;display:flex;align-items:center;justify-content:center">' + svg(icon, 15, "#1450A8", 1.8) + '</span><span style="font-size:18px;font-weight:600;line-height:1.15;color:#1450A8">' + title + '</span></div><p class="pg-small">' + txt + '</p></div>';
+    };
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("leaf", sec, "APRESENTAÇÃO") + '<h1 class="pg-h1">Uma proposta pensada para o seu empreendimento.</h1></div>' +
+      (state.infraComum ? '<div style="display:flex;gap:16px;align-items:flex-start;background:#FFFFFF;border:1px solid #DCE3EE;padding:14px 18px">' + badge({ titulo: "Infraestrutura elétrica", incluso: true }, 36) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><span class="pg-label" style="color:#B5560C">ESCOPO DESTA PROPOSTA · INFRAESTRUTURA COMUM DO PRÉDIO</span><p style="font-size:14px;line-height:1.5;color:#27304A">' + or(state.infraComumTexto, "texto do escopo") + '</p></div></div>' : '') +
+      '<div style="display:flex;flex-direction:column;gap:10px;max-width:610px">' +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55;color:#14203A">' + (resp ? "Prezado(a) " + esc(resp) + "," : "Prezados,") + '</p>' +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55">' + (state.infraComum ? 'Conforme solicitado, apresentamos nossa proposta para a infraestrutura elétrica comum do prédio, com gestão pela plataforma ' + esc(plat()) + '.</p>' : (hasCharger() ? 'Conforme solicitado, apresentamos nossa proposta para o fornecimento e a instalação de estações de recarga para veículos elétricos, com infraestrutura elétrica dedicada e gestão pela plataforma ' + esc(plat()) + '.</p>' : 'Conforme solicitado, apresentamos nossa proposta para a infraestrutura elétrica dedicada à recarga de veículos elétricos, preparada para receber as estações.</p>')) +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55">Esta proposta foi dimensionada considerando o local de instalação, a corrente necessária, o número de pontos e o perfil de uso. Caso o local precise de adequações para receber a instalação, o valor correspondente já está incluso nesta proposta.</p>' +
+        (state.infraComum ? '' : '<p class="pg-p" style="font-size:15px;line-height:1.55">Os equipamentos e os valores a seguir refletem exclusivamente o projeto de ' + clienteTxt() + '.</p>') +
+        '<div style="display:flex;flex-direction:column;gap:2px;padding-top:4px"><span style="font-size:14px;color:#56607A">Atenciosamente,</span><span style="font-size:19px;font-weight:600;color:#1450A8">' + or(state.rep.nome, "Representante") + '</span><span style="font-size:13px;color:#56607A">' + or(state.rep.cargo, "cargo") + ' · ' + or(state.rep.tel, "telefone") + '</span></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #DCE3EE;padding-top:16px"><span class="pg-label">NOSSOS COMPROMISSOS NESTE PROJETO</span><div class="grid3" style="gap:28px">' +
+        comp("shield", "Segurança normativa", "Projeto conforme NBR 5410 e NBR 17019, com circuito exclusivo e proteção diferencial e contra surtos para cada estação.") +
+        comp("bolt", "Gestão inteligente", "Pela plataforma " + esc(plat()) + ", o responsável controla o acesso às estações e acompanha cada recarga em tempo real.") +
+        comp("user", "Consumo individualizado", "Cada usuário é identificado por cartão RFID ou aplicativo, e o consumo de cada recarga é apurado para cobrança ou rateio.") +
+      '</div></div>' +
+      '<div style="display:flex;gap:26px;align-items:center;background:#1450A8;color:#F5F8FD;padding:18px 24px;border-radius:14px"><div style="flex:1 1 0;display:flex;flex-direction:column;gap:10px">' + logo(LOGO_BRANCA, 128) + '<p style="font-size:13.5px;line-height:1.5;color:#DCE6F6">Integradora 5 estrelas WEG, a Solturi simplifica a transição energética no Brasil com energia solar, armazenamento e mobilidade elétrica. Tem unidades no RS, SC, PR e MT, e a instalação é feita por técnicos habilitados conforme as NRs.</p></div><div style="width:1px;align-self:stretch;background:rgba(255,255,255,.22)"></div><div style="flex:none;width:170px;display:flex;flex-direction:column;gap:8px"><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">7 anos</b><span style="font-size:12px;color:#C9D8F0">de atuação em energia solar</span></div><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">17.114</b><span style="font-size:12px;color:#C9D8F0">projetos executados no Brasil</span></div><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">154 MWp</b><span style="font-size:12px;color:#C9D8F0">em potência instalada</span></div></div></div>',
+      n, t, null, state.infraComum ? "gap:14px;padding-top:22px" : "gap:20px;padding-top:26px");
+  }
+
+  function pSolucao(sec, n, t) {
+    const s = state.site;
+    const q = stationQty();
+    const pot = String(state.estacao.potencia || "").trim();
+    const steps = [
+      ["Quadro geral do local", "Derivação por disjuntor dedicado, independente dos demais circuitos da instalação."],
+      state.smart ? ["Quadro Smart Charging", "Controlador de carga, transformadores de corrente no alimentador e comunicação OCPP com as estações."]
+                  : ["Circuito " + (String(s.alimentacao || "").trim() ? esc(String(s.alimentacao).trim().toLowerCase()) + " " : "") + "de alimentação", (state.infraComum ? "Alimentação do quadro de distribuição dos carregadores" : "Cabeamento dimensionado para " + (!hasCharger() ? "os pontos de recarga" : q > 1 ? "as estações" : "a estação")) + ", em circuito de " + or(s.circuito, "corrente") + "."],
+      ["Quadro de distribuição dos carregadores (QDCV)", "Disjuntor geral, proteção diferencial, DPS classe II e barramentos de fase, neutro e terra."],
+      state.infraComum
+        ? ["Eletrocalhas nas áreas comuns", "Eletrocalhas instaladas nas áreas comuns da garagem, prontas para a futura passagem dos circuitos. Não inclui esperas nas vagas."]
+        : hasCharger()
+        ? [(q > 1 ? "Estações de recarga" : "Estação de recarga") + (pot ? " " + esc(pot) : "") + " (" + (state.estacao.corrente === "CC" ? "CC" : "CA") + ")",
+          (String(state.estacao.conectores || "").trim() ? esc(String(state.estacao.conectores).trim()) + ", em c" : "C") + "ircuito terminal exclusivo, com disjuntor no quadro e seccionamento junto à estação."]
+        : ["Pontos de recarga preparados", "Circuito terminal exclusivo até cada ponto, com disjuntor no quadro, pronto para receber a estação de recarga."]
+    ];
+    const stepsHtml = steps.map(function (st, i) {
+      const last = i === steps.length - 1;
+      return '<div class="step"><div class="step-rail"><span class="step-dot' + (last ? " on" : "") + '">' + (i + 1) + '</span>' + (last ? "" : '<span class="step-line"></span>') + '</div><div class="step-txt"' + (last ? ' style="padding-bottom:0"' : "") + '><b>' + st[0] + '</b><span class="pg-small">' + st[1] + '</span></div></div>';
+    }).join("");
+    const prot = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:17px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("bolt", sec, "SOLUÇÃO TÉCNICA") + '<h1 class="pg-h1">' + (state.infraComum ? 'Infraestrutura comum do prédio, do quadro às eletrocalhas.' : 'Infraestrutura dedicada, do quadro à vaga.') + '</h1></div>' +
+      '<div class="pg-band" style="padding:18px 22px;gap:12px"><span class="pg-label">CONDIÇÕES DO LOCAL</span><div class="grid4">' +
+        '<div class="kv"><small>Circuito necessário</small><b>' + or(s.circuito, "corrente") + '</b></div>' +
+        '<div class="kv"><small>Pontos de recarga</small><b>' + or(s.pontos, "pontos") + '</b></div>' +
+        '<div class="kv"><small>Tipo de local</small><b>' + or(s.tipo, "tipo") + '</b></div>' +
+        '<div class="kv"><small>Alimentação</small><b>' + or(s.alimentacao, "alimentação") + '</b></div>' +
+      '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px"><span class="pg-label">ARQUITETURA PROPOSTA</span><div>' + stepsHtml + '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #DCE3EE;padding-top:18px"><span class="pg-label">PROTEÇÕES E CRITÉRIOS</span><div class="grid2" style="row-gap:14px">' +
+        prot("Proteção diferencial", "DR 30 mA tipo B por ponto, ou tipo A com detecção de corrente contínua (RDC-DD) integrada ao carregador. Tipo AC não é admitido.") +
+        prot("Proteção contra surtos", "DPS classe II no quadro dos carregadores, coordenado com a proteção de entrada e com o SPDA da edificação.") +
+        prot("Aterramento", "Interligação ao sistema de aterramento existente, com barra de equipotencialização no quadro dos carregadores.") +
+        prot("Normas aplicáveis", "ABNT NBR 5410, ABNT NBR 17019 e normas regulamentadoras aplicáveis à execução dos serviços.") +
+      '</div></div>',
+      n, t, null, "gap:20px;padding-top:26px");
+  }
+
+  function pGestao(sec, n, t) {
+    const p = esc(plat());
+    const li = function (arr) { return '<ul class="pg-list">' + arr.map(function (x) { return '<li class="pg-li">' + x + '</li>'; }).join("") + '</ul>'; };
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("gauge", sec, "GESTÃO DE CARGA") + '<h1 class="pg-h1">Potência distribuída com inteligência.</h1></div>' +
+      '<p class="pg-p" style="max-width:610px">Transformadores de corrente medem, em tempo real, a carga do circuito do local. O controlador entrega às estações apenas a capacidade que sobra e reduz a corrente de recarga sempre que outras cargas do local entram em operação.</p>' +
+      '<div class="grid2" style="column-gap:20px">' +
+        '<div style="display:flex;flex-direction:column;gap:10px;border:1px solid #CBD4E3;padding:24px 26px"><span class="pg-label">CENÁRIO A</span><span style="font-size:20px;font-weight:600;color:#1450A8">Sem Smart Charging</span><p class="pg-small">Pela NBR 17019, o fator de demanda é igual a 1: cada estação é considerada em corrente máxima, todas ao mesmo tempo. Em um circuito compartilhado, isso limita o número de pontos.</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;background:#1450A8;padding:24px 26px"><span style="font-size:12px;font-weight:600;letter-spacing:.1em;color:#F7B98A">CENÁRIO B · ' + (state.smart ? "INCLUSO NESTA PROPOSTA" : "OPCIONAL, NÃO INCLUSO") + '</span><span style="font-size:20px;font-weight:600;color:#FFFFFF">Com Smart Charging</span><p style="font-size:14px;line-height:1.55;color:#D6D9E6">A capacidade é dividida dinamicamente entre as estações. O limite passa a ser a corrente mínima de recarga, de 6 A por conector. Assim, o mesmo circuito atende muito mais pontos.</p></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:18px;border-top:1px solid #DCE3EE;padding-top:24px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:24px"><span style="font-size:22px;font-weight:600;color:#1450A8">Plataforma ' + p + '</span><span style="font-size:14px;color:#56607A">Gestão, cobrança e acompanhamento de cada recarga.</span></div>' +
+        '<div class="grid2">' +
+          '<div style="display:flex;flex-direction:column;gap:12px"><div><b style="font-size:15px;color:#1450A8;display:block">Para a administração</b><span style="font-size:13px;color:#56607A">Painel de gestão ' + p + '</span></div>' + li(["Cadastro e controle de usuários", "Estações públicas ou restritas a usuários cadastrados", "Consumo, sessões e kWh em tempo real", "Definição do valor cobrado por recarga", "Cobrança automática de cada recarga"]) + '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:12px"><div><b style="font-size:15px;color:#1450A8;display:block">Para o usuário</b><span style="font-size:13px;color:#56607A">Aplicativo ' + p + '</span></div>' + li(["Disponibilidade das estações em tempo real", "Início e fim da recarga pelo celular", "Energia, tempo e custo de cada recarga", "Histórico e estatísticas de uso", "Pagamento das recargas pelo aplicativo"]) + '</div>' +
+        '</div>' +
+      '</div>',
+      n, t);
+  }
+
+  function pEscopo(sec, n, t) {
+    function card(m, its) {
+      return '<div class="card" style="display:flex;gap:20px">' + badge(m, 42) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="pg-h3"' + (m.incluso ? '' : ' style="color:#6A6F86"') + '>' + or(m.titulo, "Grupo") + '</span>' + (m.opcional ? OPT : m.incluso ? OK : NO) + '</div>' +
+        (its.length ? '<ul class="pg-list" style="gap:7px">' + its.map(function (x) { return '<li class="pg-li">' + esc(x) + '</li>'; }).join("") + '</ul>' : "") + '</div></div>';
+    }
+    const cards = visibleModules().map(function (m) { return card(m, moduleItems(m)); });
+    cards.push(card({ titulo: "Sistema Smart Charging", incluso: !!state.smart },
+      state.smart ? ["Controlador de carga e transformadores de corrente", "Gerenciamento dinâmico da potência entre as estações"]
+                  : ["Gerenciamento dinâmico de carga", "Disponível como opcional"]));
+    if (state.totem) cards.push(card({ titulo: "Totem", incluso: true, opcional: true }, [String(state.totemDesc || "").trim() || "[descrição do totem]"]));
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("clip", sec, "ESCOPO DE FORNECIMENTO") + '<h1 class="pg-h1">O que está incluído.</h1></div>' +
+      '<div style="display:flex;flex-direction:column;gap:14px">' + cards.join("") + '</div>',
+      n, t);
+  }
+
+  function pInvest(sec, n, t) {
+    const L = "ABCDEFGHIJ";
+    const incl = [];
+    const rows = visibleModules().map(function (m, i) {
+      if (m.incluso) incl.push(String(m.titulo || "").trim() || "Grupo " + L[i]);
+      return '<div class="modrow' + (m.incluso ? "" : " off") + '">' + badge(m, 36) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px;font-weight:600;color:#1450A8">' + or(m.titulo, "Grupo") + '</b><span class="pg-small">' + esc(moduleItems(m).join(" · ")) + '</span></div>' + (m.incluso ? OK : NO) + '</div>';
+    }).join("");
+    const smartRow = state.smart
+      ? '<div class="modrow">' + badge({ titulo: "Smart Charging", incluso: true }, 36) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px;font-weight:600;color:#1450A8">Sistema Smart Charging</b><span class="pg-small">Controlador de carga, medição e comunicação para o gerenciamento dinâmico de carga.</span></div>' + OK + '</div>'
+      : '<div class="modrow off">' + badge({ titulo: "Smart Charging", incluso: false }, 36) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px;font-weight:600">Sistema Smart Charging</b><span class="pg-small">Gerenciamento dinâmico de carga, disponível como opcional.</span></div>' + NO + '</div>';
+    const totemRow = state.totem ? '<div class="modrow">' + badge({ titulo: "Totem", incluso: true }, 36) + '<div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px;font-weight:600;color:#1450A8">Totem</b><span class="pg-small">' + or(state.totemDesc, "descrição do totem") + '</span></div>' + OPT + '</div>' : '';
+    if (state.smart) incl.push("Smart Charging");
+    const cover = incl.length > 1 ? incl.slice(0, -1).join(", ") + " e " + incl[incl.length - 1] : (incl[0] || "");
+    return page(
+      '<div class="pg-titlerow"><div class="pg-titleblock">' + eyebrow("trend", sec, "INVESTIMENTO") + '<h1 class="pg-h1">Investimento do projeto.</h1></div><p class="pg-aside">Um valor único, que reúne os grupos do escopo de fornecimento.</p></div>' +
+      '<div style="display:flex;flex-direction:column"><span class="pg-label" style="padding-bottom:8px;border-bottom:1.5px solid #1450A8">O QUE O VALOR TOTAL COBRE</span>' + rows + smartRow + totemRow + '</div>' +
+      '<div class="card" style="display:flex;align-items:center;gap:20px">' +
+        '<span style="width:42px;height:42px;flex:none;border-radius:50%;background:#FDF0E6;display:flex;align-items:center;justify-content:center">' + svg("trend", 21, "#B5560C", 1.8) + '</span>' +
+        '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px"><span class="pg-h3">' + (state.abrangencia && state.abrangencia !== "todo" ? "Valor do investimento" : "Valor total do investimento") + '</span><span style="font-size:13px;line-height:1.45;color:#56607A">' + esc(cover) + '</span></div>' +
+        '<div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span style="font-size:26px;font-weight:600;letter-spacing:-.01em;color:#1450A8;font-variant-numeric:tabular-nums">' + valorTxt() + '</span>' +
+          (abrTxt() ? '<span style="font-size:12px;font-weight:600;letter-spacing:.02em;color:#A14D0B;background:#FDF0E6;padding:4px 10px;border-radius:999px">' + abrTxt() + '</span>' : '') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:16px;border-top:1px solid #DCE3EE;padding-top:24px"><span class="pg-label">FORMAS DE PAGAMENTO</span><div class="grid2"><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:600;color:#1450A8">À vista</span><p class="pg-small">Condições negociadas diretamente com a Solturi.</p></div><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:600;color:#1450A8">Financiamento</span><p class="pg-small">Até 100% do valor do projeto, por meio da rede bancária e de cooperativas de crédito.</p></div></div></div>',
+      n, t, null, "gap:22px");
+  }
+
+  function pRetorno(sec, n, t) {
+    const d = dre();
+    const r = state.retorno;
+    const okN = function (x) { return isFinite(x); };
+    const m = function (x) { return okN(x) ? money(Math.round(x)) : "n/d"; };
+    const pb = function (x) { return okN(x) && x > 0 ? "~" + Math.round(x) + " meses" : "n/d"; };
+    const nm = ["CONSERVADOR", "BASE", "OTIMISTA"];
+    const cards = d.map(function (c, i) {
+      const base = i === 1;
+      return '<div style="display:flex;flex-direction:column;gap:6px;padding:18px 20px;' + (base ? "background:#1450A8;border-top:3px solid #B5560C" : "background:#FFFFFF;border:1px solid #DCE3EE") + '"><span style="font-size:12px;font-weight:600;letter-spacing:.1em;color:' + (base ? "#F7B98A" : "#56607A") + '">' + nm[i] + '</span><span style="font-size:26px;font-weight:600;letter-spacing:-.01em;color:' + (base ? "#FFFFFF" : "#1450A8") + '">' + pb(c.payback) + '</span><span style="font-size:13px;color:' + (base ? "#D6D9E6" : "#56607A") + '">Lucro de ' + m(c.lucro) + '/mês</span></div>';
+    }).join("");
+    const row = function (label, key, cls, f) {
+      return '<tr class="' + (cls || "") + '"><td>' + label + '</td>' + d.map(function (c, i) { return '<td class="' + (i === 1 ? "base" : "") + (cls === "lucro" && i === 1 ? " hl" : "") + '">' + f(c[key]) + '</td>'; }).join("") + '</tr>';
+    };
+    const int = function (x) { return okN(x) ? fmt(Math.round(x)) : "n/d"; };
+    const one = function (x) { return okN(x) ? fmt(x, 1) : "n/d"; };
+    const inv = num(state.valor);
+    const pot = String(state.estacao.potencia || "").trim();
+    return page(
+      '<div class="pg-titlerow"><div class="pg-titleblock">' + eyebrow("bars", sec, "ESTIMATIVA DE RETORNO") + '<h1 class="pg-h1">DRE mensal estimado.</h1></div><p class="pg-aside">Eletroposto ' + (pot ? esc(pot) : "[potência]") + ' · custo de compra da energia R$ ' + esc(r.custo) + '/kWh.</p></div>' +
+      '<div class="grid3" style="gap:14px">' + cards + '</div>' +
+      '<table class="tbl"><thead><tr><th>MENSAL</th><th style="width:112px">CONSERVADOR</th><th class="base" style="width:112px">BASE</th><th style="width:112px">OTIMISTA</th></tr></thead><tbody>' +
+        row("Recargas/mês", "rec", "", int) +
+        row("Recargas/dia", "dia", "", one) +
+        row("Energia vendida (kWh)", "kwh", "", int) +
+        row("Receita bruta (R$ " + esc(r.preco) + "/kWh)", "bruta", "", m) +
+        row("(−) Impostos " + esc(r.impostos) + "%", "impostos", "minus", m) +
+        row("(=) Receita líquida", "liq", "sum", m) +
+        row("(−) Energia à concessionária (R$ " + esc(r.custo) + "/kWh)", "energia", "minus", m) +
+        row("(−) Take rate " + esc(r.take) + "%", "take", "minus", m) +
+        row("(=) EBITDA", "ebitda", "sum", m) +
+        row("(−) IRPJ/CSLL " + esc(r.ir) + "%", "ir", "minus", m) +
+        row("(=) Lucro líquido/mês", "lucro", "sum lucro", m) +
+        row("Lucro líquido/ano", "ano", "", m) +
+        '<tr class="pay"><td>Payback sobre ' + (okN(inv) ? money(inv, 2) : "[valor]") + '</td>' + d.map(function (c, i) { return '<td class="' + (i === 1 ? "base hl" : "") + '">' + pb(c.payback) + '</td>'; }).join("") + '</tr>' +
+      '</tbody></table>' +
+      '<p style="font-size:12px;line-height:1.55;color:#56607A">Simulação de caráter estimativo. Os resultados reais dependem da utilização da estação, das tarifas de energia vigentes e do regime tributário do cliente.</p>',
+      n, t);
+  }
+
+  function pCondicoes(sec, n, t) {
+    const item = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px;border-top:1.5px solid #1450A8;padding-top:14px"><span style="font-size:18px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
+    const prazo = String(state.prazo || "").trim();
+    const nl = naoList();
+    const footLeft = '<div style="display:flex;flex-direction:column;gap:3px;line-height:1.45"><span><b style="font-weight:600;color:#1450A8">Solturi Energia Solar</b> · CNPJ 31.087.724/0001-48</span><span>Av. Mal. Deodoro da Fonseca, 1560, Centro, Jaraguá do Sul/SC · 89251-702</span><span>(47) 99250-4607 · solturi.com.br</span></div>';
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("doc", sec, "CONDIÇÕES GERAIS") + '<h1 class="pg-h1">Condições comerciais.</h1></div>' +
+      '<div class="grid2" style="row-gap:22px">' +
+        item("Prazo de execução", "Até " + (prazo ? esc(prazo) : "[prazo]") + " dias a partir do alinhamento e agendamento entre as partes. Condições climáticas ou fatores externos que impeçam a execução segura podem estender o prazo, com nova programação acordada.") +
+        item("Fornecimento de materiais", "Entrega sob responsabilidade da Solturi, em data combinada com o cliente, conforme logística e cronograma de execução.") +
+        item("Garantia", "Instalação: 12 meses a partir da conclusão dos serviços. Equipamentos: " + (String(state.garantiaProduto || "").trim() ? esc(String(state.garantiaProduto).trim()) : "[prazo]") + " meses, conforme o termo de garantia do fabricante.") +
+        item("Validade", or(state.validade, "validade") + " a partir da emissão (" + or(state.emissao, "dd/mm/aaaa") + "). Valores sujeitos à disponibilidade de estoque.") +
+      '</div>' +
+      (nl.length ? '<div class="pg-band" style="padding:20px 24px;gap:12px"><span class="pg-label">NÃO INCLUSO NESTA PROPOSTA</span><ul class="pg-list" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;row-gap:8px">' + nl.map(function (x) { return '<li class="pg-li">' + esc(x) + '</li>'; }).join("") + '</ul></div>' : "") +
+      (state.smart ? '<p style="font-size:13px;line-height:1.55;color:#56607A"><b style="font-weight:600;color:#1450A8">Compatibilidade.</b> Estações de outros fabricantes integradas ao Smart Charging devem atender ao protocolo OCPP 1.6J, incluindo perfis de carga (SetChargingProfile) e leitura de potência por fase.</p>' : ""),
+      n, t, footLeft);
+  }
+
+  /* ---------- proposta: analisador de potência ---------- */
+  function anInt(v, d) { const n = parseInt(String(v == null ? "" : v).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? d : n; }
+  function anD() { return anInt(state.an.dias, 7); }
+  function anI() { return anInt(state.an.intervalo, 10); }
+  function diasTxt(n) { return n + (n === 1 ? " dia" : " dias"); }
+  const EXT = ["zero", "uma", "duas", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze"];
+  function vezes(n) { return (EXT[n] || String(n)) + (n === 1 ? " vez" : " vezes"); }
+  function lcFirst(s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
+  const SOLTURI_FOOT = '<div style="display:flex;flex-direction:column;gap:3px;line-height:1.45"><span><b style="font-weight:600;color:#1450A8">Solturi Energia Solar</b> · CNPJ 31.087.724/0001-48</span><span>Av. Mal. Deodoro da Fonseca, 1560, Centro, Jaraguá do Sul/SC · 89251-702</span><span>(47) 99250-4607 · solturi.com.br</span></div>';
+  const SOBRE_SOLTURI = '<div style="display:flex;gap:26px;align-items:center;background:#1450A8;color:#F5F8FD;padding:18px 24px;border-radius:14px"><div style="flex:1 1 0;display:flex;flex-direction:column;gap:10px">' + logo(LOGO_BRANCA, 128) + '<p style="font-size:13.5px;line-height:1.5;color:#DCE6F6">Integradora 5 estrelas WEG, a Solturi simplifica a transição energética no Brasil com energia solar, armazenamento e mobilidade elétrica. Tem unidades no RS, SC, PR e MT, e a instalação é feita por técnicos habilitados conforme as NRs.</p></div><div style="width:1px;align-self:stretch;background:rgba(255,255,255,.22)"></div><div style="flex:none;width:170px;display:flex;flex-direction:column;gap:8px"><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">7 anos</b><span style="font-size:12px;color:#C9D8F0">de atuação em energia solar</span></div><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">17.114</b><span style="font-size:12px;color:#C9D8F0">projetos executados no Brasil</span></div><div><b class="mont" style="display:block;font-size:20px;font-weight:800;color:#FFFFFF;line-height:1.1">154 MWp</b><span style="font-size:12px;color:#C9D8F0">em potência instalada</span></div></div></div>';
+
+  function aCover() {
+    const resp = String(state.responsavel || "").trim();
+    const who = resp ? '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + esc(resp) + '</b><span style="font-size:13px;line-height:1.35;color:#5B6382">' + clienteTxt() + '</span>'
+      : '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + clienteTxt() + '</b>';
+    const meta = function (l, v) { return '<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#6A6F86">' + l + '</span>' + v + '</div>'; };
+    const val = function (v) { return '<b style="font-size:17px;font-weight:600;line-height:1.3;color:#1450A8">' + v + '</b>'; };
+    return '<div class="pg cover">' +
+      '<div class="cv-arc" style="right:-330px;top:-330px;width:760px;height:760px;border-radius:150px;transform:rotate(45deg);border:1.5px solid #D96A18;opacity:.45"></div>' +
+      '<div class="cv-arc" style="right:-250px;top:-250px;width:600px;height:600px;border-radius:120px;transform:rotate(45deg);background:linear-gradient(90deg,#D96A18 0%,#7A5F6A 45%,#1450A8 100%)"></div>' +
+      '<div class="cv-arc" style="left:-360px;top:420px;width:520px;height:520px;border-radius:110px;transform:rotate(45deg);border:1.5px solid #E6EDF7"></div>' +
+      '<div class="cv-arc" style="left:0;right:0;bottom:0;height:12px;border-radius:0;background:#D96A18"></div>' +
+      '<svg style="position:absolute;left:620px;top:96px" width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"></path><path d="M12 18l4-6"></path><path d="M7 18h10"></path></svg>' +
+      '<svg style="position:absolute;right:72px;bottom:196px" width="330" height="134" viewBox="0 0 330 134" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M0 120H330" stroke="#DCE3EE" stroke-width="1.2"></path>' +
+        '<path d="M0 62H226" stroke="#D96A18" stroke-width="1.4" stroke-dasharray="4 5"></path>' +
+        '<path d="M0 104L16 100L26 78L38 70L50 86L62 102L78 104L94 98L104 74L116 62L128 84L140 100L156 104L172 99L182 80L194 66L206 88L218 102" stroke="#1450A8" stroke-width="1.8"></path>' +
+        '<rect x="258" y="30" width="52" height="90" rx="6" stroke="#1450A8" stroke-width="1.8"></rect>' +
+        '<rect x="266" y="40" width="36" height="26" rx="2" stroke="#1450A8" stroke-width="1.5"></rect>' +
+        '<path d="M270 58l5-8 5 6 5-10 5 8 5-3" stroke="#D96A18" stroke-width="1.6"></path>' +
+        '<circle cx="274" cy="80" r="3" stroke="#1450A8" stroke-width="1.4"></circle><circle cx="284" cy="80" r="3" stroke="#1450A8" stroke-width="1.4"></circle><circle cx="294" cy="80" r="3" stroke="#1450A8" stroke-width="1.4"></circle>' +
+        '<path d="M268 96h32M268 104h20" stroke="#1450A8" stroke-width="1.4"></path>' +
+        '<path d="M258 100c-14 0-18 14-30 10" stroke="#D96A18" stroke-width="1.8"></path>' +
+        '<path d="M286 24c0-10 6-16 16-16 0 10-6 16-16 16z" stroke="#D96A18" stroke-width="1.6"></path><path d="M286 24l7-7" stroke="#D96A18" stroke-width="1.6"></path>' +
+      '</svg>' +
+      logo(LOGO_AZUL, 230) +
+      '<div style="flex-grow:1"></div>' +
+      '<div style="display:flex;flex-direction:column;gap:24px;max-width:450px">' +
+        '<div style="display:flex;align-items:center;gap:14px"><span style="display:block;width:40px;height:2px;background:#B5560C"></span><span style="font-size:13px;font-weight:600;letter-spacing:.12em;color:#B5560C">PROPOSTA COMERCIAL</span></div>' +
+        '<h1 style="margin:0;font-weight:600;font-size:46px;line-height:1.14;letter-spacing:-.02em;color:#1450A8">Sua rede elétrica, <span style="color:#D96A18">medida de verdade.</span></h1>' +
+        '<p style="margin:0;font-size:17px;line-height:1.6;color:#5B6382;max-width:410px">Instalação de analisador de potência no quadro elétrico, registro contínuo das grandezas elétricas e relatório técnico para decidir com segurança.</p>' +
+        '<div style="display:flex"><span style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#E6EEF9;border:1px solid #C9D8F0;font-size:12px;font-weight:600;letter-spacing:.04em;color:#1450A8">' + svg("gauge", 14, "#1450A8", 2) + 'Diagnóstico de rede · Decisão com dados</span></div>' +
+      '</div>' +
+      '<div style="flex-grow:1.2"></div>' +
+      '<div style="display:flex;gap:20px;padding-bottom:14px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#5B6382">INTEGRADORA 5 ESTRELAS WEG</span><span style="font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B6382">EXECUÇÃO CONFORME NR-10</span></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid #DCE3EE;padding-top:22px">' +
+        meta("PREPARADA PARA", who) + meta("PROPOSTA Nº", val(or(state.numero, "000"))) + meta("EMISSÃO", val(or(state.emissao, "dd/mm/aaaa"))) + meta("VALIDADE", val(or(state.validade, "validade"))) +
+      '</div></div>';
+  }
+
+  function aApresentacao(sec, n, t) {
+    const resp = String(state.responsavel || "").trim();
+    const D = anD(), I = anI();
+    const comp = function (icon, title, txt) {
+      return '<div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:30px;height:30px;border-radius:50%;background:#E6EEF9;display:flex;align-items:center;justify-content:center">' + svg(icon, 15, "#1450A8", 1.8) + '</span><span style="font-size:18px;font-weight:600;line-height:1.15;color:#1450A8">' + title + '</span></div><p class="pg-small">' + txt + '</p></div>';
+    };
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("leaf", sec, "APRESENTAÇÃO") + '<h1 class="pg-h1">Decisões elétricas baseadas em medição real.</h1></div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px;max-width:610px">' +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55;color:#14203A">' + (resp ? "Prezado(a) " + esc(resp) + "," : "Prezados,") + '</p>' +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55">Conforme solicitado, apresentamos nossa proposta para a instalação de um analisador de potência na rede elétrica de ' + clienteTxt() + ', com registro contínuo das grandezas elétricas e entrega de relatório técnico.</p>' +
+        '<p class="pg-p" style="font-size:15px;line-height:1.55">A medição mostra como a instalação se comporta no dia a dia: demanda máxima, horários de pico, equilíbrio entre as fases e qualidade da energia. Com esses dados, novos projetos, como estações de recarga para veículos elétricos, sistemas fotovoltaicos ou aumentos de carga, são dimensionados com segurança, sem sobras e sem riscos para a instalação.</p>' +
+        '<div style="display:flex;flex-direction:column;gap:2px;padding-top:4px"><span style="font-size:14px;color:#56607A">Atenciosamente,</span><span style="font-size:19px;font-weight:600;color:#1450A8">' + or(state.rep.nome, "Representante") + '</span><span style="font-size:13px;color:#56607A">' + or(state.rep.cargo, "cargo") + ' · ' + or(state.rep.tel, "telefone") + '</span></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #DCE3EE;padding-top:20px"><span class="pg-label">NOSSOS COMPROMISSOS NESTE SERVIÇO</span><div class="grid3" style="gap:28px">' +
+        comp("shield", "Segurança no quadro", "Instalação e retirada por técnicos habilitados conforme a NR-10, com EPIs e procedimentos adequados ao trabalho no quadro elétrico.") +
+        comp("gauge", "Medição completa", "Registro em intervalos de " + I + " minutos ao longo de " + diasTxt(D) + (D >= 7 ? ", cobrindo dias úteis e fim de semana, o ciclo completo de uso do local." : ".")) +
+        comp("doc", "Relatório objetivo", "Resultados em gráficos e tabelas, com a capacidade disponível da rede e recomendações práticas para o próximo passo.") +
+      '</div></div>' + SOBRE_SOLTURI,
+      n, t, null, "gap:22px;padding-top:28px");
+  }
+
+  function aMetodologia(sec, n, t) {
+    const a = state.an, D = anD(), I = anI();
+    const ponto = or(a.ponto, "ponto de instalação");
+    const steps = [
+      ["Agendamento e acesso", "Data combinada com o responsável do local e confirmação do acesso ao " + lcFirst(ponto) + "."],
+      ["Instalação do analisador", "Conexão das garras de tensão e dos sensores de corrente flexíveis em cada fase e no neutro, sem desligamento sempre que as condições do quadro permitirem."],
+      ["Registro contínuo por " + diasTxt(D), "O equipamento permanece no quadro registrando as grandezas elétricas, sem interferir na rotina do local."],
+      ["Retirada, análise e relatório", "Remoção do equipamento, validação dos registros e entrega do relatório técnico, com apresentação dos resultados ao cliente."]
+    ];
+    const stepsHtml = steps.map(function (st, i) {
+      const last = i === steps.length - 1;
+      return '<div class="step"><div class="step-rail"><span class="step-dot' + (last ? " on" : "") + '">' + (i + 1) + '</span>' + (last ? "" : '<span class="step-line"></span>') + '</div><div class="step-txt" style="padding-bottom:' + (last ? "0" : "16px") + '"><b>' + st[0] + '</b><span class="pg-small">' + st[1] + '</span></div></div>';
+    }).join("");
+    const regs = Math.round(D * 1440 / I);
+    const crit1 = (D === 7 && I === 10) ? "1.008 registros de 10 minutos por grandeza, a mesma base de leituras usada pelo PRODIST, Módulo 8, da ANEEL." : fmt(regs) + " registros de " + I + " minutos por grandeza ao longo de " + diasTxt(D) + " de medição.";
+    const prot = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:17px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("gauge", sec, "METODOLOGIA") + '<h1 class="pg-h1">Como a medição é feita.</h1></div>' +
+      '<div class="pg-band"><span class="pg-label">CONDIÇÕES DA MEDIÇÃO</span><div class="grid4">' +
+        '<div class="kv"><small>Ponto de instalação</small><b>' + ponto + '</b></div>' +
+        '<div class="kv"><small>Alimentação</small><b>' + or(a.alimentacao, "alimentação") + '</b></div>' +
+        '<div class="kv"><small>Período de registro</small><b>' + diasTxt(D) + (D > 1 ? " consecutivos" : "") + '</b></div>' +
+        '<div class="kv"><small>Intervalo de integração</small><b>' + I + " minutos" + '</b></div>' +
+      '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:14px"><span class="pg-label">ETAPAS DO SERVIÇO</span><div>' + stepsHtml + '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #DCE3EE;padding-top:22px"><span class="pg-label">CRITÉRIOS TÉCNICOS</span><div class="grid2" style="row-gap:18px">' +
+        prot("Período representativo", crit1) +
+        prot("Leitura por fase", "Tensão e corrente registradas em cada fase e no neutro, o que revela desequilíbrios e fases sobrecarregadas.") +
+        prot("Sem impacto na operação", "O analisador apenas mede: as cargas funcionam normalmente durante todo o período de registro.") +
+        prot("Normas aplicáveis", "ABNT NBR 5410, PRODIST Módulo 8 e NR-10 para a execução dos serviços no quadro.") +
+      '</div></div>',
+      n, t, null, "gap:24px");
+  }
+
+  function aRelatorio(sec, n, t) {
+    const G = [
+      ["Tensão por fase", "V", "Níveis de tensão, afundamentos e elevações"],
+      ["Corrente por fase e neutro", "A", "Carregamento real de cada fase e do neutro"],
+      ["Potências ativa, reativa e aparente", "kW · kvar · kVA", "Comportamento das cargas ao longo do dia"],
+      ["Demanda máxima", "kW", "Picos de consumo e horários em que ocorrem"],
+      ["Fator de potência", "FP", "Indício de excedente de reativos na fatura"],
+      ["Desequilíbrio entre fases", "%", "Distribuição das cargas entre as fases"],
+      ["Distorção harmônica", "THD", "Harmônicos de tensão e de corrente"],
+      ["Energia consumida", "kWh", "Consumo total e diário no período medido"]
+    ];
+    const gHtml = G.map(function (g) {
+      return '<div style="display:flex;flex-direction:column;gap:3px;padding:11px 0;border-bottom:1px solid #E4E9F1"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="font-size:15px;font-weight:700;color:#1450A8">' + g[0] + '</span><span style="flex:none;font-size:12px;font-weight:600;color:#B5560C">' + g[1] + '</span></div><span style="font-size:13.5px;line-height:1.45;color:#465068">' + g[2] + '</span></div>';
+    }).join("");
+    const R = ["Curvas de carga diárias e semanais", "Demanda máxima e horário de ocorrência", "Capacidade disponível no circuito de entrada", "Avaliação de desequilíbrio, FP e harmônicos", "Recomendações para o projeto pretendido", "Apresentação dos resultados ao cliente"];
+    const rHtml = R.map(function (x) { return '<li style="display:flex;gap:12px;font-size:14px;line-height:1.5;color:#F5F8FD"><span style="flex:none;width:12px;height:1.5px;margin-top:10px;background:#F7B98A"></span><span>' + x + '</span></li>'; }).join("");
+    const A = [
+      ["charger", "Recarga veicular", "Quantas estações a rede suporta e se é preciso Smart Charging."],
+      ["sun", "Energia solar", "Perfil de consumo para dimensionar o sistema e avaliar a inversão de fluxo."],
+      ["trend", "Aumento de carga", "Novas máquinas ou ampliações com base na folga real da entrada."],
+      ["alert", "Qualidade de energia", "Investigação de desarmes, aquecimento de cabos e falhas em equipamentos."]
+    ];
+    const aHtml = A.map(function (x) {
+      return '<div style="display:flex;flex-direction:column;gap:8px"><span style="width:34px;height:34px;border-radius:50%;background:#FDF0E6;display:flex;align-items:center;justify-content:center">' + svg(x[0], 17, "#B5560C", 1.8) + '</span><span style="font-size:15px;font-weight:700;color:#1450A8">' + x[1] + '</span><p style="font-size:13px;line-height:1.5;color:#465068">' + x[2] + '</p></div>';
+    }).join("");
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("bars", sec, "GRANDEZAS E RELATÓRIO") + '<h1 class="pg-h1">O que é medido e o que você recebe.</h1></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px"><span class="pg-label" style="padding-bottom:8px;border-bottom:1.5px solid #1450A8">GRANDEZAS REGISTRADAS</span><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:36px">' + gHtml + '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:14px;background:#1450A8;padding:24px 28px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:24px"><span style="font-size:20px;font-weight:600;color:#F5F8FD">O relatório técnico</span><span style="font-size:12px;font-weight:600;letter-spacing:.1em;color:#F7B98A">ENTREGUE AO FINAL DA MEDIÇÃO</span></div><ul style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px;row-gap:9px">' + rHtml + '</ul></div>' +
+      '<div style="display:flex;flex-direction:column;gap:16px"><span class="pg-label">ONDE O RESULTADO É USADO</span><div class="grid4" style="gap:22px">' + aHtml + '</div></div>',
+      n, t);
+  }
+
+  function aInvest(sec, n, t) {
+    const a = state.an, D = anD();
+    const row = function (lt, t1, t2, tag, off) {
+      return '<div class="modrow' + (off ? " off" : "") + '" style="align-items:flex-start;padding:16px 0"><span class="lt">' + lt + '</span><div style="flex:1 1 0;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px;font-weight:600;color:' + (off ? "#6A6F86" : "#1450A8") + '">' + t1 + '</b><span class="pg-small">' + t2 + '</span></div>' + tag + '</div>';
+    };
+    const np = anInt(a.parcelas, 1);
+    const payItem = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
+    return page(
+      '<div class="pg-titlerow"><div class="pg-titleblock">' + eyebrow("trend", sec, "ESCOPO E INVESTIMENTO") + '<h1 class="pg-h1">Investimento do serviço.</h1></div><p class="pg-aside">Um valor único, que reúne equipamento, serviços de campo e relatório técnico.</p></div>' +
+      '<div style="display:flex;flex-direction:column"><span class="pg-label" style="padding-bottom:8px;border-bottom:1.5px solid #1450A8">O QUE O VALOR TOTAL COBRE</span>' +
+        row("A", "Analisador de potência", "Locação do analisador de energia " + or(a.modelo, "modelo") + ", com sensores de corrente flexíveis, durante os " + diasTxt(D) + " de medição.", OK) +
+        row("B", "Serviços de campo", "Deslocamento da equipe, instalação e retirada do equipamento no quadro por técnicos habilitados (NR-10).", OK) +
+        row("C", "Análise e relatório técnico", "Tratamento dos registros, relatório com gráficos, capacidade disponível e recomendações, e apresentação dos resultados.", OK) +
+        row("", "Período adicional de medição", "Prorrogação além dos " + diasTxt(D) + ", quando solicitada pelo cliente. Disponível como opcional.", NO, true) +
+      '</div>' +
+      '<div class="card" style="display:flex;align-items:center;gap:20px;border-top:3px solid #B5560C">' +
+        '<span style="width:42px;height:42px;flex:none;border-radius:50%;background:#FDF0E6;display:flex;align-items:center;justify-content:center">' + svg("trend", 21, "#B5560C", 1.8) + '</span>' +
+        '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px"><span class="pg-h3">Valor total do investimento</span><span style="font-size:13px;line-height:1.45;color:#56607A">Equipamento, serviços de campo e relatório (A a C)</span></div>' +
+        '<span style="flex:none;font-size:26px;font-weight:600;letter-spacing:-.01em;color:#1450A8;font-variant-numeric:tabular-nums">' + valorTxt() + '</span>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:16px;border-top:1px solid #DCE3EE;padding-top:24px"><span class="pg-label">FORMAS DE PAGAMENTO</span><div class="grid2">' +
+        payItem("À vista", "Condições negociadas diretamente com a Solturi.") +
+        (np >= 2 ? payItem("Parcelado", "Em até " + vezes(np) + ".") : "") +
+      '</div></div>',
+      n, t, null, "gap:28px");
+  }
+
+  function aCondicoes(sec, n, t) {
+    const a = state.an, D = anD();
+    const item = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px;border-top:1.5px solid #1450A8;padding-top:14px"><span style="font-size:18px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
+    const nl = lines(a.naoIncluso);
+    return page(
+      '<div class="pg-titleblock">' + eyebrow("doc", sec, "CONDIÇÕES GERAIS") + '<h1 class="pg-h1">Condições comerciais.</h1></div>' +
+      '<div class="grid2" style="row-gap:22px">' +
+        item("Prazos", "Instalação em até " + or(a.prazoInstal, "prazo") + " dias úteis após o aceite, em data combinada. Medição de " + diasTxt(D) + " e entrega do relatório em até " + or(a.prazoRel, "prazo") + " dias úteis após a retirada do equipamento.") +
+        item("Responsabilidades do cliente", "Liberar o acesso ao quadro na instalação e na retirada, e manter o quadro fechado durante a medição, sem manuseio do equipamento.") +
+        item("Guarda do equipamento", "Durante a medição, o analisador fica sob a guarda do cliente. Danos, perda ou manuseio indevido no período são de responsabilidade do cliente.") +
+        item("Validade", or(state.validade, "validade") + " a partir da emissão (" + or(state.emissao, "dd/mm/aaaa") + "). Data de instalação sujeita à disponibilidade do equipamento na agenda.") +
+      '</div>' +
+      (nl.length ? '<div class="pg-band" style="padding:20px 24px;gap:12px"><span class="pg-label">NÃO INCLUSO NESTA PROPOSTA</span><ul class="pg-list" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;row-gap:8px">' + nl.map(function (x) { return '<li class="pg-li">' + esc(x) + '</li>'; }).join("") + '</ul></div>' : ""),
+      n, t, SOLTURI_FOOT);
+  }
+
+  function buildAnalisador() {
+    const seq = [aApresentacao, aMetodologia, aRelatorio, aInvest, aCondicoes];
+    const total = 1 + seq.length;
+    const out = [{ name: "Capa", html: aCover() }];
+    seq.forEach(function (fn, i) { out.push({ name: "", html: fn(i + 1, i + 2, total) }); });
+    return out;
+  }
+
+  function parseItem(line) {
+    return { desc: line.trim() };
+  }
+  /* Divide os grupos em folhas: altura estimada de cabeçalho de grupo e de linha */
+  function itensChunks() {
+    const BUDGET = 760, GH = 60, RH = 31, WRAP = 19, TH = 34;
+    const cost = function (r) { return RH + (r && r.desc.length > 90 ? WRAP * Math.ceil((r.desc.length - 90) / 90) : 0); };
+    const pages = [];
+    let cur = [], used = TH;
+    function flush() { if (cur.length) pages.push(cur); cur = []; used = TH; }
+    state.itens.grupos.forEach(function (g, gi) {
+      let rows = lines(g.itens).map(parseItem);
+      if (!rows.length) rows = [null];
+      let part = 0;
+      while (rows.length) {
+        const need = cost(rows[0]) + (rows.length > 1 ? cost(rows[1]) : 0);
+        if (cur.length && used + GH + need > BUDGET) flush();
+        let room = BUDGET - used - GH, take = 0;
+        while (take < rows.length && (take === 0 || room - cost(rows[take]) >= 0)) { room -= cost(rows[take]); take++; }
+        cur.push({ g: g, gi: gi, rows: rows.slice(0, take), start: part, cont: part > 0 });
+        used = BUDGET - room;
+        part += take;
+        rows = rows.slice(take);
+      }
+    });
+    if (gruposComValor()) {
+      if (cur.length && used + 52 > BUDGET) flush();
+      cur.push({ total: true });
+    }
+    flush();
+    return pages.length ? pages : [[]];
+  }
+  function grupoValor(g) { const v = num(g.valor); return isNaN(v) ? null : v; }
+  function gruposComValor() { return state.itens.grupos.some(function (g) { return grupoValor(g) != null; }); }
+  function pItens(sec, n, t, chunk, idx) {
+    const groups = chunk.map(function (c) {
+      if (c.total) {
+        const soma = state.itens.grupos.reduce(function (a, g) { const v = grupoValor(g); return a + (v || 0); }, 0);
+        return '<tr><td colspan="2" style="padding:18px 0 0;border-bottom:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1.5px solid #1450A8;padding:12px 12px 0"><span style="font-size:15px;font-weight:700;color:#1450A8">Total dos grupos</span><span style="font-size:18px;font-weight:600;color:#1450A8;font-variant-numeric:tabular-nums">' + money(soma, 2) + '</span></div></td></tr>';
+      }
+      const g = c.g;
+      const gv = grupoValor(g);
+      const head = '<tr><td colspan="2" style="padding:' + (c === chunk[0] ? "4px" : "18px") + ' 0 4px;border-bottom:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;background:#EEF3FA;padding:8px 12px">' +
+        '<div style="display:flex;align-items:center;gap:12px">' + badge({ titulo: g.titulo, incluso: true }, 30) + '<span style="font-size:15px;font-weight:600;color:#1450A8">' + or(g.titulo, "Grupo") + (c.cont ? ' <span style="font-size:12px;font-weight:500;color:#56607A">(continuação)</span>' : '') + '</span></div>' +
+        '<span style="display:flex;align-items:baseline;gap:14px;flex:none"><span style="font-size:12px;font-weight:600;color:#56607A">' + lines(g.itens).length + (lines(g.itens).length === 1 ? " item" : " itens") + '</span>' + (gv != null ? '<span style="font-size:15px;font-weight:600;color:#1450A8;font-variant-numeric:tabular-nums">' + money(gv, 2) + '</span>' : (gruposComValor() ? '<span style="font-size:13px;color:#8A93A8">R$ [valor]</span>' : '')) + '</span></div></td></tr>';
+      const rows = c.rows.map(function (r, k) {
+        if (!r) return '<tr><td style="color:#8A93A8"></td><td style="text-align:left;color:#8A93A8">[itens do grupo]</td></tr>';
+        const code = (c.gi + 1) + "." + String(c.start + k + 1).padStart(2, "0");
+        return '<tr><td style="color:#56607A">' + code + '</td><td style="text-align:left">' + esc(r.desc) + '</td></tr>';
+      }).join("");
+      return head + rows;
+    }).join("");
+    return page(
+      '<div class="pg-titlerow"><div class="pg-titleblock">' + eyebrow("clip", sec, "ITENS ORÇADOS" + (idx ? " · CONTINUAÇÃO" : "")) + '<h1 class="pg-h1">Composição do orçamento.</h1></div><p class="pg-aside">Itens agrupados por etapa, conforme o levantamento do local.</p></div>' +
+      '<table class="tbl"><thead><tr><th style="width:58px">ITEM</th><th style="text-align:left">DESCRIÇÃO</th></tr></thead><tbody>' + groups + '</tbody></table>',
+      n, t, null, "gap:22px");
+  }
+
+  function buildPages() {
+    if (state.tipo === "analisador") return buildAnalisador();
+    const seq = [pApresentacao, pSolucao, pGestao, pEscopo];
+    if (state.itens.ativo) seq.push("ITENS");
+    seq.push(pInvest);
+    if (state.retorno.ativo) seq.push(pRetorno);
+    seq.push(pCondicoes);
+    const chunks = state.itens.ativo ? itensChunks() : [];
+    const total = 1 + seq.length + (chunks.length ? chunks.length - 1 : 0);
+    const out = [{ name: "Capa", html: pCover() }];
+    let n = 2, sec = 1;
+    seq.forEach(function (fn) {
+      if (fn === "ITENS") { chunks.forEach(function (ch, j) { out.push({ name: "", html: pItens(sec, n++, total, ch, j) }); }); sec++; }
+      else out.push({ name: "", html: fn(sec++, n++, total) });
+    });
+    return out;
+  }
+
+  /* ---------- preview ---------- */
+  const preview = document.getElementById("preview");
+  function scale() { const w = preview.clientWidth - 32; return Math.max(0.2, Math.min(1, w / PAGE_W)); }
+  function render() {
+    const s = scale();
+    const pages = buildPages();
+    preview.innerHTML = pages.map(function (p, i) {
+      return '<div class="sheet" style="width:' + (PAGE_W * s) + 'px;height:' + (PAGE_H * s) + 'px" aria-label="Página ' + (i + 1) + '">' + p.html.replace('<div class="pg', '<div style="transform:scale(' + s + ')" class="pg') + '</div>';
+    }).join("");
+    document.getElementById("bar-sub").textContent = "Proposta Nº " + (state.numero || "—") + " · " + (state.tipo === "analisador" ? "Analisador de potência · " : "Recarga veicular · ") + (String(state.cliente || "").trim() || "novo cliente");
+  }
+  let rq = 0;
+  function schedule() { if (rq) return; rq = requestAnimationFrame(function () { rq = 0; render(); }); }
+  try { new ResizeObserver(schedule).observe(preview); } catch (e) { window.addEventListener("resize", schedule); }
+
+  /* ---------- form binding ---------- */
+  const form = document.getElementById("form");
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+  function applyTipo() {
+    const want = state.tipo === "analisador" ? "analisador" : "recarga";
+    form.querySelectorAll("[data-tipo]").forEach(function (el) { el.hidden = el.dataset.tipo !== want; });
+  }
+  function fillForm() {
+    applyTipo();
+    form.querySelectorAll("[data-k]").forEach(function (el) {
+      const v = getPath(state, el.dataset.k);
+      if (el.type === "checkbox") el.checked = !!v; else el.value = v == null ? "" : v;
+    });
+    renderMods();
+    renderGrupos();
+  }
+  form.addEventListener("input", function (e) {
+    const el = e.target;
+    if (el.dataset.k) {
+      setPath(state, el.dataset.k, el.type === "checkbox" ? el.checked : el.value);
+      if (el.dataset.k === "numero") state.numeroAuto = false;
+      if (el.dataset.k === "carregador") renderMods();
+      if (el.dataset.k === "tipo") fillForm();
+    } else if (el.dataset.grp != null) {
+      state.itens.grupos[+el.dataset.grp][el.dataset.field] = el.value;
+    } else if (el.dataset.mod != null) {
+      const m = state.modulos[+el.dataset.mod];
+      if (el.dataset.field === "incluso") m.incluso = el.checked; else m[el.dataset.field] = el.value;
+    } else return;
+    dirty = true; saveDraft(); schedule();
+  });
+
+  const modsEl = document.getElementById("mods");
+  function renderMods() {
+    const L = "ABCDEFGHIJ";
+    modsEl.innerHTML = state.modulos.map(function (m, i) {
+      return '<div class="mod"><div class="mod-head"><span class="mod-letter" aria-hidden="true">' + svg(iconFor(m), 14, "currentColor", 2) + '</span><input id="mod-t-' + i + '" aria-label="Título do grupo ' + L[i] + '" data-mod="' + i + '" data-field="titulo" value="' + esc(m.titulo) + '">' +
+        '<button type="button" class="icon-btn" data-act="up" data-i="' + i + '" aria-label="Mover grupo ' + L[i] + ' para cima">↑</button>' +
+        '<button type="button" class="icon-btn" data-act="del" data-i="' + i + '" aria-label="Remover grupo ' + L[i] + '">✕</button></div>' +
+        (m.auto ? '<span class="hint">' + (hasCharger() ? 'Itens preenchidos a partir de “Estação e plataforma”.' : 'Oculto na proposta: o carregador está desmarcado em “Estação e plataforma”.') + '</span>'
+                : '<textarea id="mod-i-' + i + '" aria-label="Itens do grupo ' + L[i] + ', um por linha" data-mod="' + i + '" data-field="itens" placeholder="Um item por linha">' + esc(m.itens) + '</textarea>') +
+        '<div class="mod-foot"><label class="check" for="mod-c-' + i + '"><input type="checkbox" id="mod-c-' + i + '" data-mod="' + i + '" data-field="incluso"' + (m.incluso ? " checked" : "") + '> Incluso no valor</label></div></div>';
+    }).join("");
+  }
+  modsEl.addEventListener("click", function (e) {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    const i = +b.dataset.i;
+    if (b.dataset.act === "del") state.modulos.splice(i, 1);
+    if (b.dataset.act === "up" && i > 0) { const t = state.modulos[i - 1]; state.modulos[i - 1] = state.modulos[i]; state.modulos[i] = t; }
+    dirty = true; saveDraft(); renderMods(); schedule();
+  });
+  document.getElementById("btn-addmod").addEventListener("click", function () {
+    if (state.modulos.length >= 6) { say("Use no máximo 6 grupos para caber na página.", true); return; }
+    state.modulos.push({ titulo: "Novo grupo", itens: "", incluso: true });
+    dirty = true; saveDraft(); renderMods(); schedule();
+  });
+
+  const gruposEl = document.getElementById("grupos");
+  function renderGrupos() {
+    gruposEl.innerHTML = state.itens.grupos.map(function (g, i) {
+      return '<div class="mod"><div class="mod-head"><span class="mod-letter" aria-hidden="true">' + svg(iconFor(g), 14, "currentColor", 2) + '</span><input id="grp-t-' + i + '" aria-label="Nome do grupo de itens ' + (i + 1) + '" data-grp="' + i + '" data-field="titulo" value="' + esc(g.titulo) + '">' +
+        '<button type="button" class="icon-btn" data-gact="up" data-i="' + i + '" aria-label="Mover grupo ' + (i + 1) + ' para cima">↑</button>' +
+        '<button type="button" class="icon-btn" data-gact="del" data-i="' + i + '" aria-label="Remover grupo ' + (i + 1) + '">✕</button></div>' +
+        '<textarea id="grp-i-' + i + '" aria-label="Itens do grupo ' + (i + 1) + ', um por linha" data-grp="' + i + '" data-field="itens" placeholder="Um item por linha">' + esc(g.itens) + '</textarea>' +
+        '<div class="f"><label for="grp-v-' + i + '">Valor do grupo (R$)</label><input id="grp-v-' + i + '" data-grp="' + i + '" data-field="valor" inputmode="decimal" placeholder="Ex.: 12.500,00" value="' + esc(g.valor || "") + '"></div></div>';
+    }).join("");
+  }
+  gruposEl.addEventListener("click", function (e) {
+    const b = e.target.closest("button[data-gact]"); if (!b) return;
+    const i = +b.dataset.i, gs = state.itens.grupos;
+    if (b.dataset.gact === "del") gs.splice(i, 1);
+    if (b.dataset.gact === "up" && i > 0) { const x = gs[i - 1]; gs[i - 1] = gs[i]; gs[i] = x; }
+    dirty = true; saveDraft(); renderGrupos(); schedule();
+  });
+  document.getElementById("btn-addgrp").addEventListener("click", function () {
+    state.itens.grupos.push({ titulo: "Novo grupo", itens: "", valor: "" });
+    dirty = true; saveDraft(); renderGrupos(); schedule();
+    const last = document.getElementById("grp-t-" + (state.itens.grupos.length - 1)); if (last) last.focus();
+  });
+  gruposEl.addEventListener("change", function (e) { if (e.target.dataset.field === "titulo") renderGrupos(); });
+
+  /* ---------- status ---------- */
+  const statusEl = document.getElementById("status");
+  let sayT = 0;
+  function say(msg, err) { statusEl.textContent = msg; statusEl.className = "status" + (err ? " err" : ""); clearTimeout(sayT); sayT = setTimeout(function () { statusEl.textContent = ""; }, 6000); }
+
+
+  /* ---------- fora do Claude: armazenamento local e download pelo navegador ---------- */
+  function localDb() {
+    const KEY = "solturi-propostas-salvas-v1";
+    const subs = [];
+    function all() { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; } }
+    function emit() { const o = all(); const docs = Object.keys(o).map(function (k) { return o[k]; }).sort(function (a, b) { return (b.numero || 0) - (a.numero || 0); }).map(function (d) { return { data: function () { return d; } }; }); subs.forEach(function (fn) { fn({ docs: docs }); }); }
+    const q = { orderBy: function () { return q; }, limit: function () { return q; }, onSnapshot: function (next) { subs.push(next); setTimeout(emit, 0); return function () {}; } };
+    return {
+      collection: function () { return q; },
+      doc: function (path) { const id = path.split("/").pop(); return { set: function (body) { const o = all(); o[id] = body; try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { return Promise.reject({ code: "quota_exceeded" }); } emit(); return Promise.resolve(); } }; }
+    };
+  }
+  const browserDownloads = { save: function (req) { const blob = req.data instanceof Blob ? req.data : new Blob([req.data]); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = req.filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000); return Promise.resolve({ status: "saved" }); } };
+  /* ---------- storage (db) ---------- */
+  let db = null, dirty = false, savedDocs = [];
+  const savedEl = document.getElementById("saved-list");
+  function renderSaved() {
+    if (!db) { savedEl.innerHTML = '<p class="saved-empty">As propostas salvas aparecem aqui quando o armazenamento está disponível.</p>'; return; }
+    if (!savedDocs.length) { savedEl.innerHTML = '<p class="saved-empty">Nenhuma proposta salva ainda. Preencha os dados e clique em “Salvar proposta”.</p>'; return; }
+    savedEl.innerHTML = savedDocs.map(function (d) {
+      const v = num(d.valor);
+      const tp = (d.tipo || (d.state && d.state.tipo)) === "analisador" ? "Analisador" : "Recarga";
+      return '<div class="saved-row"><div><b>Nº ' + esc(d.numero) + ' · ' + esc(d.cliente || "sem cliente") + '</b><span><span class="saved-tipo">' + tp + '</span> · ' + (isNaN(v) ? "sem valor" : money(v, 2)) + ' · ' + esc(d.emissao || "") + '</span></div><button type="button" class="btn small" data-open="' + esc(d.numero) + '">Abrir</button></div>';
+    }).join("");
+  }
+  savedEl.addEventListener("click", function (e) {
+    const b = e.target.closest("button[data-open]"); if (!b) return;
+    const d = savedDocs.find(function (x) { return String(x.numero) === b.dataset.open; });
+    if (!d) return;
+    state = normalize(JSON.parse(JSON.stringify(d.state || {})));
+    state.numeroAuto = false;
+    dirty = false; saveDraft(); fillForm(); render();
+    say("Proposta Nº " + state.numero + " aberta.");
+  });
+  renderSaved();
+
+  (async function () {
+    try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
+    if (!db) db = localDb();
+    if (!db) { renderSaved(); return; }
+    db.collection("propostas").orderBy("numero", "desc").limit(200).onSnapshot(function (snap) {
+      savedDocs = snap.docs.map(function (d) { return d.data(); }).filter(Boolean);
+      const max = savedDocs.reduce(function (a, d) { const n = parseInt(d.numero, 10); return isNaN(n) ? a : Math.max(a, n); }, FIRST_NUMBER - 1);
+      nextNumber = Math.max(FIRST_NUMBER, max + 1);
+      if (state.numeroAuto && String(state.numero) !== String(nextNumber)) { state.numero = String(nextNumber); fillForm(); render(); saveDraft(); }
+      renderSaved();
+    }, function () { db = null; renderSaved(); });
+  })();
+
+  document.getElementById("btn-save").addEventListener("click", async function () {
+    if (!db) { say("O armazenamento não está disponível nesta visualização. Use “Baixar PDF” para guardar a proposta.", true); return; }
+    const n = parseInt(state.numero, 10);
+    if (isNaN(n)) { say("Informe um número de proposta válido antes de salvar.", true); return; }
+    const body = { numero: n, tipo: state.tipo === "analisador" ? "analisador" : "recarga", cliente: String(state.cliente || ""), valor: String(state.valor || ""), emissao: String(state.emissao || ""), atualizadoEm: new Date().toISOString(), state: JSON.parse(JSON.stringify(Object.assign({}, state, { numeroAuto: false }))) };
+    try { await db.doc("propostas/" + n).set(body); state.numeroAuto = false; dirty = false; saveDraft(); say("Proposta Nº " + n + " salva."); }
+    catch (e) { say(e && e.code === "quota_exceeded" ? "Limite de propostas salvas atingido. Exclua propostas antigas para salvar novas." : "Não foi possível salvar agora. Tente de novo em instantes.", true); }
+  });
+
+  let newArmed = 0;
+  const btnNew = document.getElementById("btn-new");
+  btnNew.addEventListener("click", function () {
+    if (dirty && !newArmed) {
+      btnNew.textContent = "Descartar e começar nova?";
+      newArmed = setTimeout(function () { newArmed = 0; btnNew.textContent = "Nova proposta"; }, 4000);
+      return;
+    }
+    clearTimeout(newArmed); newArmed = 0; btnNew.textContent = "Nova proposta";
+    const keepTipo = state.tipo;
+    state = blank(nextNumber); state.tipo = keepTipo === "analisador" ? "analisador" : "recarga";
+    dirty = false; saveDraft(); fillForm(); render();
+    say("Nova proposta Nº " + state.numero + " com emissão em " + state.emissao + ".");
+  });
+
+  /* ---------- export ---------- */
+  let downloads = null;
+  const btnPdf = document.getElementById("btn-pdf"), btnHtml = document.getElementById("btn-html");
+  (async function () {
+    try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { downloads = null; }
+    if (!downloads) downloads = browserDownloads;
+    if (!downloads) { btnPdf.disabled = true; btnHtml.disabled = true; btnPdf.title = btnHtml.title = "Download indisponível nesta visualização"; }
+  })();
+
+  function fileBase() {
+    const c = String(state.cliente || "cliente").trim().replace(/[\\/:*?"<>|]+/g, "").slice(0, 60) || "cliente";
+    return "Proposta " + (state.numero || "") + " - " + c;
+  }
+  function handleSaveErr(e) {
+    const c = e && e.code;
+    if (c === "declined") say("Download cancelado.");
+    else if (c === "rate_limited") say("Já existe uma confirmação de download aberta.", true);
+    else say("O download não está disponível nesta visualização.", true);
+  }
+
+  btnPdf.addEventListener("click", async function () {
+    if (!downloads) return;
+    if (!window.html2canvas || !window.jspdf) { say("O gerador de PDF não carregou. Use “Baixar HTML” e imprima pelo navegador.", true); return; }
+    btnPdf.disabled = true; const old = btnPdf.textContent; btnPdf.textContent = "Gerando PDF…";
+    const host = document.getElementById("export-host");
+    try {
+      host.innerHTML = buildPages().map(function (p) { return p.html; }).join("");
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+      const els = host.querySelectorAll(".pg");
+      for (let i = 0; i < els.length; i++) {
+        const canvas = await window.html2canvas(els[i], { scale: 2, backgroundColor: "#FFFFFF", logging: false, width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W });
+        if (i > 0) pdf.addPage("a4", "portrait");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+      }
+      const blob = pdf.output("blob");
+      await downloads.save({ filename: fileBase() + ".pdf", data: blob });
+      say("PDF salvo.");
+    } catch (e) {
+      if (e && e.code) handleSaveErr(e); else say("Não foi possível gerar o PDF. Use “Baixar HTML” e imprima pelo navegador.", true);
+    } finally { host.innerHTML = ""; btnPdf.disabled = false; btnPdf.textContent = old; }
+  });
+
+  btnHtml.addEventListener("click", async function () {
+    if (!downloads) return;
+    const css = Array.from(document.querySelectorAll("style")).map(function (s) { return s.textContent; }).join("\n");
+    const pageCss = css.slice(css.indexOf("/* ===== Folhas"));
+    const doc = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(fileBase()) + '</title>' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap">' +
+      '<style>@page{size:A4;margin:0}html,body{margin:0;background:#888}body{display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0}' +
+      '@media print{body{background:none;padding:0;gap:0;display:block}.pg{page-break-after:always;break-after:page;zoom:1}}' +
+      '*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}' + pageCss + '</style></head><body>' +
+      buildPages().map(function (p) { return p.html; }).join("") + '</body></html>';
+    try { await downloads.save({ filename: fileBase() + ".html", data: doc }); say("Arquivo HTML salvo. Abra no navegador e use Imprimir › Salvar como PDF."); }
+    catch (e) { handleSaveErr(e); }
+  });
+
+  fillForm();
+  render();
+})();
+</script>
+
+</body></html>
