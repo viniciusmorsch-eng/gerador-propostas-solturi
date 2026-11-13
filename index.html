@@ -392,11 +392,13 @@ details.sec[open] > summary::after { content: "–"; }
     return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
   }
 
+  function newUid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
   function blank(numero) {
     return {
       tipo: "recarga",
       numero: numero != null ? String(numero) : String(FIRST_NUMBER),
       numeroAuto: true,
+      uid: newUid(),
       an: { ponto: "Quadro geral de entrada", alimentacao: "Trifásica", modelo: "", dias: "7", intervalo: "10", parcelas: "2", prazoInstal: "10", prazoRel: "5", naoIncluso: DEFAULT_NAO_AN },
       emissao: today(),
       validade: "15 dias úteis",
@@ -436,6 +438,7 @@ details.sec[open] > summary::after { content: "–"; }
     const b = blank(s && s.numero);
     const out = Object.assign({}, b, s || {});
     if (out.tipo !== "analisador") out.tipo = "recarga";
+    if (!out.uid) out.uid = newUid();
     ["rep", "site", "estacao", "retorno", "an"].forEach(function (k) { out[k] = Object.assign({}, b[k], (s && s[k]) || {}); });
     if (!Array.isArray(out.modulos) || !out.modulos.length) out.modulos = b.modulos;
     out.itens = Object.assign({}, b.itens, (s && s.itens) || {});
@@ -1145,6 +1148,27 @@ details.sec[open] > summary::after { content: "–"; }
   function say(msg, err) { statusEl.textContent = msg; statusEl.className = "status" + (err ? " err" : ""); clearTimeout(sayT); sayT = setTimeout(function () { statusEl.textContent = ""; }, 6000); }
 
 
+
+  /* ---------- planilha Google compartilhada (Apps Script) ---------- */
+  /* Cole aqui o link do App da Web publicado no Apps Script (termina em /exec). Vazio = salva só neste navegador. */
+  const API_URL = "https://script.google.com/macros/s/AKfycbyWsOFU5GNC9TGOPUmU85EHKJSmKE3d57pu42wE06OesHrQOD1T5PEq9SPrZlWrv9Gi/exec";
+  function remoteDb(url) {
+    const subs = []; let last = [];
+    function emit() { const docs = last.map(function (d) { return { data: function () { return d; } }; }); subs.forEach(function (fn) { fn({ docs: docs }); }); }
+    async function refresh() {
+      try { const r = await fetch(url + "?action=list", { cache: "no-store" }); const j = await r.json(); if (j && j.ok) { last = j.propostas || []; emit(); } } catch (e) { /* sem conexão: mantém a última lista */ }
+    }
+    const q = { orderBy: function () { return q; }, limit: function () { return q; }, onSnapshot: function (next) { subs.push(next); refresh(); setInterval(refresh, 30000); return function () {}; } };
+    return {
+      collection: function () { return q; },
+      doc: function () { return { set: async function (body) {
+        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "save", proposta: body }) });
+        const j = await r.json();
+        if (!j.ok) throw (j.conflict ? { code: "conflict", next: j.next } : { code: "unavailable" });
+        await refresh();
+      } }; }
+    };
+  }
   /* ---------- fora do Claude: armazenamento local e download pelo navegador ---------- */
   function localDb() {
     const KEY = "solturi-propostas-salvas-v1";
@@ -1183,7 +1207,7 @@ details.sec[open] > summary::after { content: "–"; }
 
   (async function () {
     try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
-    if (!db) db = localDb();
+    if (!db) db = API_URL ? remoteDb(API_URL) : localDb();
     if (!db) { renderSaved(); return; }
     db.collection("propostas").orderBy("numero", "desc").limit(200).onSnapshot(function (snap) {
       savedDocs = snap.docs.map(function (d) { return d.data(); }).filter(Boolean);
@@ -1198,9 +1222,14 @@ details.sec[open] > summary::after { content: "–"; }
     if (!db) { say("O armazenamento não está disponível nesta visualização. Use “Baixar PDF” para guardar a proposta.", true); return; }
     const n = parseInt(state.numero, 10);
     if (isNaN(n)) { say("Informe um número de proposta válido antes de salvar.", true); return; }
-    const body = { numero: n, tipo: state.tipo === "analisador" ? "analisador" : "recarga", cliente: String(state.cliente || ""), valor: String(state.valor || ""), emissao: String(state.emissao || ""), atualizadoEm: new Date().toISOString(), state: JSON.parse(JSON.stringify(Object.assign({}, state, { numeroAuto: false }))) };
+    const body = { numero: n, tipo: state.tipo === "analisador" ? "analisador" : "recarga", cliente: String(state.cliente || ""), valor: String(state.valor || ""), emissao: String(state.emissao || ""), atualizadoEm: new Date().toISOString(), uid: state.uid, state: JSON.parse(JSON.stringify(Object.assign({}, state, { numeroAuto: false }))) };
     try { await db.doc("propostas/" + n).set(body); state.numeroAuto = false; dirty = false; saveDraft(); say("Proposta Nº " + n + " salva."); }
-    catch (e) { say(e && e.code === "quota_exceeded" ? "Limite de propostas salvas atingido. Exclua propostas antigas para salvar novas." : "Não foi possível salvar agora. Tente de novo em instantes.", true); }
+    catch (e) {
+      if (e && e.code === "conflict" && e.next) {
+        const old = n; state.numero = String(e.next); body.numero = e.next; body.state.numero = String(e.next);
+        try { await db.doc("propostas/" + e.next).set(body); state.numeroAuto = false; dirty = false; saveDraft(); fillForm(); render(); say("O Nº " + old + " já tinha sido usado em outra proposta. Esta foi salva como Nº " + e.next + "."); return; }
+        catch (e2) { e = e2; }
+      } say(e && e.code === "quota_exceeded" ? "Limite de propostas salvas atingido. Exclua propostas antigas para salvar novas." : "Não foi possível salvar agora. Tente de novo em instantes.", true); }
   });
 
   let newArmed = 0;
