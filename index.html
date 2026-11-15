@@ -76,7 +76,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex; flex-direction: column; min-width: 0;
 }
 @media (min-width: 921px) {
-  .form { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; }
+  .form { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar-h, 82px) + 10px); max-height: calc(100dvh - var(--bar-h, 82px) - 26px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 }
 details.sec { border-bottom: 1px solid var(--line); }
 details.sec:last-child { border-bottom: 0; }
@@ -110,7 +110,12 @@ details.sec[open] > summary::after { content: "–"; }
 .icon-btn { min-width: 36px; min-height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; color: var(--muted); }
 .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-.saved { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
+.saved { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 236px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.saved-busca { width: 100%; min-height: 36px; padding: 6px 10px; margin-bottom: 8px; border-radius: 7px; border: 1px solid var(--line); background: var(--field); }
+.form, .saved { scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
+.form::-webkit-scrollbar, .saved::-webkit-scrollbar { width: 10px; }
+.form::-webkit-scrollbar-thumb, .saved::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 10px; border: 2px solid var(--panel); }
+.form::-webkit-scrollbar-track, .saved::-webkit-scrollbar-track { background: transparent; }
 .saved-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .saved-row div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .saved-row b { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -222,6 +227,7 @@ details.sec[open] > summary::after { content: "–"; }
   <form class="form" id="form" autocomplete="off" novalidate>
     <details class="sec" open>
       <summary>Propostas salvas</summary>
+      <input type="search" id="saved-busca" class="saved-busca" placeholder="Buscar por número ou cliente" aria-label="Buscar proposta salva">
       <div class="saved" id="saved-list"></div>
     </details>
 
@@ -1245,7 +1251,10 @@ details.sec[open] > summary::after { content: "–"; }
   function renderSaved() {
     if (!db) { savedEl.innerHTML = '<p class="saved-empty">As propostas salvas aparecem aqui quando o armazenamento está disponível.</p>'; return; }
     if (!savedDocs.length) { savedEl.innerHTML = '<p class="saved-empty">Nenhuma proposta salva ainda. Preencha os dados e clique em “Salvar proposta”.</p>'; return; }
-    savedEl.innerHTML = savedDocs.map(function (d) {
+    const busca = String((document.getElementById("saved-busca") || {}).value || "").trim().toLowerCase();
+    const docs = !busca ? savedDocs : savedDocs.filter(function (d) { return (String(d.numero) + " " + String(d.cliente || "")).toLowerCase().indexOf(busca) >= 0; });
+    if (!docs.length) { savedEl.innerHTML = '<p class="saved-empty">Nenhuma proposta encontrada para essa busca.</p>'; return; }
+    savedEl.innerHTML = docs.map(function (d) {
       const v = num(d.valor);
       const tp = (d.tipo || (d.state && d.state.tipo)) === "analisador" ? "Analisador" : "Recarga";
       return '<div class="saved-row"><div><b>Nº ' + esc(d.numero) + ' · ' + esc(d.cliente || "sem cliente") + '</b><span><span class="saved-tipo">' + tp + '</span> · ' + (isNaN(v) ? "sem valor" : money(v, 2)) + ' · ' + esc(d.emissao || "") + '</span></div><button type="button" class="btn small" data-open="' + esc(d.numero) + '">Abrir</button></div>';
@@ -1261,6 +1270,24 @@ details.sec[open] > summary::after { content: "–"; }
     say("Proposta Nº " + state.numero + " aberta.");
   });
   renderSaved();
+  document.getElementById("saved-busca").addEventListener("input", function (e) { e.stopPropagation(); renderSaved(); });
+  document.getElementById("saved-busca").addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+  /* altura real da barra superior e seção aberta sempre visível no painel */
+  (function () {
+    const bar = document.querySelector(".bar"), formEl = document.getElementById("form");
+    function syncBar() { document.documentElement.style.setProperty("--bar-h", Math.ceil(bar.getBoundingClientRect().height) + "px"); }
+    syncBar(); window.addEventListener("resize", syncBar);
+    if (window.ResizeObserver) new ResizeObserver(syncBar).observe(bar);
+    formEl.addEventListener("click", function (e) {
+      const sm = e.target.closest("details.sec > summary"); if (!sm) return;
+      const d = sm.parentElement;
+      setTimeout(function () {
+        if (!d.open || formEl.scrollHeight <= formEl.clientHeight) return;
+        const fr = formEl.getBoundingClientRect(), dr = d.getBoundingClientRect();
+        if (dr.bottom > fr.bottom) formEl.scrollTop += Math.min(dr.top - fr.top - 8, dr.bottom - fr.bottom + 16);
+      }, 0);
+    });
+  })();
 
   (async function () {
     try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
