@@ -279,12 +279,15 @@ details.sec[open] > summary::after { content: "–"; }
     </details>
 
     <details class="sec" data-tipo="recarga">
-      <summary>Condições do local</summary>
+      <summary>Requisitos do local</summary>
       <div class="fields">
-        <div class="f"><label for="f-circ">Circuito necessário</label><input id="f-circ" data-k="site.circuito" placeholder="Ex.: 63 A"></div>
+        <p class="hint full" style="margin:0">O que o local precisa ter para receber a estação. Ao escolher o modelo da estação, estes campos são sugeridos automaticamente e podem ser ajustados.</p>
+        <div class="f"><label for="f-alim">Alimentação necessária</label><input id="f-alim" data-k="site.alimentacao" list="dl-alim" placeholder="Ex.: Trifásica 380 V"></div>
+        <div class="f"><label for="f-pdisp">Potência disponível</label><input id="f-pdisp" data-k="site.potenciaDisp" placeholder="Ex.: 120 kW"></div>
+        <div class="f"><label for="f-circ">Circuito necessário</label><input id="f-circ" data-k="site.circuito" placeholder="Ex.: 200 A"></div>
+        <div class="f"><label for="f-net">Conexão à internet</label><input id="f-net" data-k="site.internet" list="dl-net" placeholder="Ex.: Wi-Fi ou 4G"></div>
         <div class="f"><label for="f-pontos">Pontos de recarga</label><input id="f-pontos" data-k="site.pontos" placeholder="Ex.: 2 pontos"></div>
         <div class="f"><label for="f-tipo">Tipo de local</label><input id="f-tipo" data-k="site.tipo" list="dl-tipo"></div>
-        <div class="f"><label for="f-alim">Alimentação</label><input id="f-alim" data-k="site.alimentacao" list="dl-alim"></div>
       </div>
     </details>
 
@@ -365,7 +368,8 @@ details.sec[open] > summary::after { content: "–"; }
 <div id="export-host" aria-hidden="true"></div>
 
 <datalist id="dl-tipo"><option value="Condomínio residencial"><option value="Comercial"><option value="Posto de combustível"><option value="Farmácia"><option value="Estacionamento"><option value="Centro comercial"><option value="Hotel"><option value="Indústria"></datalist>
-<datalist id="dl-alim"><option value="Trifásica"><option value="Bifásica"><option value="Monofásica"></datalist>
+<datalist id="dl-alim"><option value="Trifásica 380 V"><option value="Trifásica 220 V"><option value="Monofásica 220 V"><option value="Bifásica 220 V"></datalist>
+<datalist id="dl-net"><option value="Wi-Fi ou 4G"><option value="Cabo de rede no ponto"><option value="Sinal 4G no ponto"></datalist>
 <datalist id="dl-ponto"><option value="Quadro geral de entrada"><option value="Quadro de distribuição"><option value="Quadro de medição"></datalist>
 <datalist id="dl-plat"><option value="TUPI"><option value="WEMOB"><option value="STATION"></datalist>
 
@@ -408,7 +412,7 @@ details.sec[open] > summary::after { content: "–"; }
       cliente: "",
       responsavel: "",
       rep: { nome: "", tel: "", cargo: "Representante comercial" },
-      site: { circuito: "", pontos: "", tipo: "Comercial", alimentacao: "Trifásica" },
+      site: { circuito: "", potenciaDisp: "", internet: "Wi-Fi ou 4G", pontos: "", tipo: "Comercial", alimentacao: "Trifásica 380 V" },
       estacao: { qtd: "1", modelo: "", linha: "WEMOB WEG", potencia: "", corrente: "CA", conectores: "" },
       plataforma: "TUPI",
       smart: false,
@@ -451,6 +455,19 @@ details.sec[open] > summary::after { content: "–"; }
   function potKey(v) { return String(v || "").toLowerCase().replace(/\s|kw/g, "").replace(".", ","); }
   function detectModelo(e) {
     return Object.keys(ESTACOES).find(function (k) { return potKey(ESTACOES[k].potencia) === potKey(e.potencia) && ESTACOES[k].corrente === e.corrente; }) || "";
+  }
+  /* requisitos do local a partir do modelo e da quantidade (estimativa, editável) */
+  const DISJ = [16, 20, 25, 32, 40, 50, 63, 70, 80, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 500, 630, 800, 1000, 1250, 1600];
+  function requisitos() {
+    const e = state.estacao, m = ESTACOES[e.modelo]; if (!m) return;
+    const kw = parseFloat(m.potencia.replace(",", ".")), q = stationQty(), total = kw * q;
+    const mono = e.modelo === "ac7";
+    const amp = mono ? total * 1000 / 230 : total * 1000 / (Math.sqrt(3) * 380 * (m.corrente === "CC" ? 0.95 : 1));
+    const disj = DISJ.find(function (d) { return d >= amp * 1.0; }) || Math.ceil(amp / 100) * 100;
+    state.site.alimentacao = mono ? "Monofásica 220 V" : "Trifásica 380 V";
+    state.site.potenciaDisp = fmt(total, total % 1 ? 1 : 0) + " kW";
+    state.site.circuito = disj + " A";
+    state.site.pontos = (function () { const c = /dois/i.test(e.conectores || "") ? 2 : 1; const n = c * q; return n + (n > 1 ? " pontos" : " ponto"); })();
   }
   function normalize(s) {
     const b = blank(s && s.numero);
@@ -648,7 +665,7 @@ details.sec[open] > summary::after { content: "–"; }
     const steps = [
       ["Quadro geral do local", "Derivação por disjuntor dedicado, independente dos demais circuitos da instalação."],
       state.smart ? ["Quadro Smart Charging", "Controlador de carga, transformadores de corrente no alimentador e comunicação OCPP com as estações."]
-                  : ["Circuito " + (String(s.alimentacao || "").trim() ? esc(String(s.alimentacao).trim().toLowerCase()) + " " : "") + "de alimentação", (state.infraComum ? "Alimentação do quadro de distribuição dos carregadores" : "Cabeamento dimensionado para " + (!hasCharger() ? "os pontos de recarga" : q > 1 ? "as estações" : "a estação")) + ", em circuito de " + or(s.circuito, "corrente") + "."],
+                  : ["Circuito " + (String(s.alimentacao || "").trim() ? esc(String(s.alimentacao).trim().replace(/^(\S+)/, function (w) { return w.toLowerCase().replace(/fásica$/, "fásico"); })) + " " : "") + "de alimentação", (state.infraComum ? "Alimentação do quadro de distribuição dos carregadores" : "Cabeamento dimensionado para " + (!hasCharger() ? "os pontos de recarga" : q > 1 ? "as estações" : "a estação")) + ", em circuito de " + or(s.circuito, "corrente") + "."],
       ["Quadro de distribuição dos carregadores (QDCV)", "Disjuntor geral, proteção diferencial, DPS classe II e barramentos de fase, neutro e terra."],
       state.infraComum
         ? ["Eletrocalhas nas áreas comuns", "Eletrocalhas instaladas nas áreas comuns da garagem, prontas para a futura passagem dos circuitos. Não inclui esperas nas vagas."]
@@ -664,11 +681,11 @@ details.sec[open] > summary::after { content: "–"; }
     const prot = function (t1, t2) { return '<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:17px;font-weight:600;color:#1450A8">' + t1 + '</span><p class="pg-small">' + t2 + '</p></div>'; };
     return page(
       '<div class="pg-titleblock">' + eyebrow("bolt", sec, "SOLUÇÃO TÉCNICA") + '<h1 class="pg-h1">' + (state.infraComum ? 'Infraestrutura comum do prédio, do quadro às eletrocalhas.' : 'Infraestrutura dedicada, do quadro à vaga.') + '</h1></div>' +
-      '<div class="pg-band" style="padding:18px 22px;gap:12px"><span class="pg-label">CONDIÇÕES DO LOCAL</span><div class="grid4">' +
-        '<div class="kv"><small>Circuito necessário</small><b>' + or(s.circuito, "corrente") + '</b></div>' +
-        '<div class="kv"><small>Pontos de recarga</small><b>' + or(s.pontos, "pontos") + '</b></div>' +
-        '<div class="kv"><small>Tipo de local</small><b>' + or(s.tipo, "tipo") + '</b></div>' +
+      '<div class="pg-band" style="padding:18px 22px;gap:12px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px"><span class="pg-label">O QUE O LOCAL PRECISA TER</span>' + (function () { const ref = [String(s.tipo || "").trim(), String(s.pontos || "").trim()].filter(Boolean).map(esc).join(" · "); return ref ? '<span style="font-size:12px;color:#5B6382">' + ref + '</span>' : ''; })() + '</div><div class="grid4">' +
         '<div class="kv"><small>Alimentação</small><b>' + or(s.alimentacao, "alimentação") + '</b></div>' +
+        '<div class="kv"><small>Potência disponível</small><b>' + or(String(s.potenciaDisp || "").trim() || (function () { const k = parseFloat(String(state.estacao.potencia || "").replace(",", ".")); return hasCharger() && k > 0 ? fmt(k * q, (k * q) % 1 ? 1 : 0) + " kW" : ""; })(), "potência") + '</b></div>' +
+        '<div class="kv"><small>Circuito necessário</small><b>' + or(s.circuito, "corrente") + '</b></div>' +
+        '<div class="kv"><small>Internet</small><b>' + or(s.internet, "conexão") + '</b></div>' +
       '</div></div>' +
       '<div style="display:flex;flex-direction:column;gap:12px"><span class="pg-label">ARQUITETURA PROPOSTA</span><div>' + stepsHtml + '</div></div>' +
       '<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #DCE3EE;padding-top:18px"><span class="pg-label">PROTEÇÕES E CRITÉRIOS</span><div class="grid2" style="row-gap:14px">' +
@@ -1103,7 +1120,8 @@ details.sec[open] > summary::after { content: "–"; }
       setPath(state, el.dataset.k, el.type === "checkbox" ? el.checked : el.value);
       if (el.dataset.k === "numero") state.numeroAuto = false;
       if (el.dataset.k === "carregador") renderMods();
-      if (el.dataset.k === "estacao.modelo" && ESTACOES[el.value]) { Object.assign(state.estacao, ESTACOES[el.value]); if (!String(state.estacao.linha || "").trim()) state.estacao.linha = "WEMOB WEG"; fillForm(); }
+      if (el.dataset.k === "estacao.modelo" && ESTACOES[el.value]) { Object.assign(state.estacao, ESTACOES[el.value]); if (!String(state.estacao.linha || "").trim()) state.estacao.linha = "WEMOB WEG"; requisitos(); fillForm(); }
+      if (el.dataset.k === "estacao.qtd" && ESTACOES[state.estacao.modelo]) { requisitos(); ["f-alim", "f-pdisp", "f-circ", "f-pontos"].forEach(function (id) { const f = document.getElementById(id); f.value = getPath(state, f.dataset.k) || ""; }); }
       if ((el.dataset.k === "estacao.potencia" || el.dataset.k === "estacao.corrente") && state.estacao.modelo !== detectModelo(state.estacao)) { state.estacao.modelo = detectModelo(state.estacao); document.getElementById("f-mod").value = state.estacao.modelo; }
       if (el.dataset.k === "tipo") fillForm();
     } else if (el.dataset.grp != null) {
