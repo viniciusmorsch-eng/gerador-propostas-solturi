@@ -292,7 +292,10 @@ details.sec[open] > summary::after { content: "–"; }
       <summary>Estação e plataforma</summary>
       <div class="fields">
         <label class="check full" for="f-carr"><input type="checkbox" id="f-carr" data-k="carregador"> Incluir carregador na proposta</label>
+        <div class="f full"><label for="f-mod">Modelo da estação</label>
+          <select id="f-mod" data-k="estacao.modelo"><option value="">Personalizado (preencher abaixo)</option><optgroup label="Corrente alternada (AC)"><option value="ac7">WEMOB 7,4 kW AC</option><option value="ac23">WEMOB 23 kW AC</option><option value="ac46">WEMOB 46 kW AC</option></optgroup><optgroup label="Corrente contínua (DC)"><option value="dc30">WEMOB 30 kW DC</option><option value="dc40">WEMOB 40 kW DC</option><option value="dc60">WEMOB 60 kW DC</option><option value="dc80">WEMOB 80 kW DC</option><option value="dc120">WEMOB 120 kW DC</option></optgroup></select></div>
         <div class="f"><label for="f-qtd">Quantidade</label><input id="f-qtd" data-k="estacao.qtd" inputmode="numeric"></div>
+        <div class="f"><label for="f-lin">Fabricante e linha</label><input id="f-lin" data-k="estacao.linha" placeholder="Ex.: WEMOB WEG"></div>
         <div class="f"><label for="f-pot">Potência</label><input id="f-pot" data-k="estacao.potencia" placeholder="Ex.: 120 kW"></div>
         <div class="f"><label for="f-corr">Corrente</label>
           <select id="f-corr" data-k="estacao.corrente"><option value="CA">Alternada (CA)</option><option value="CC">Contínua (CC)</option></select></div>
@@ -406,7 +409,7 @@ details.sec[open] > summary::after { content: "–"; }
       responsavel: "",
       rep: { nome: "", tel: "", cargo: "Representante comercial" },
       site: { circuito: "", pontos: "", tipo: "Comercial", alimentacao: "Trifásica" },
-      estacao: { qtd: "1", potencia: "", corrente: "CA", conectores: "" },
+      estacao: { qtd: "1", modelo: "", linha: "WEMOB WEG", potencia: "", corrente: "CA", conectores: "" },
       plataforma: "TUPI",
       smart: false,
       carregador: true,
@@ -434,12 +437,28 @@ details.sec[open] > summary::after { content: "–"; }
     };
   }
 
+  /* estações da linha WEMOB WEG pré-cadastradas */
+  const ESTACOES = {
+    ac7:   { potencia: "7,4 kW", corrente: "CA", conectores: "Um conector Tipo 2" },
+    ac23:  { potencia: "23 kW",  corrente: "CA", conectores: "Um conector Tipo 2" },
+    ac46:  { potencia: "46 kW",  corrente: "CA", conectores: "Dois conectores Tipo 2" },
+    dc30:  { potencia: "30 kW",  corrente: "CC", conectores: "Um conector CCS2" },
+    dc40:  { potencia: "40 kW",  corrente: "CC", conectores: "Um conector CCS2" },
+    dc60:  { potencia: "60 kW",  corrente: "CC", conectores: "Dois conectores CCS2" },
+    dc80:  { potencia: "80 kW",  corrente: "CC", conectores: "Dois conectores CCS2" },
+    dc120: { potencia: "120 kW", corrente: "CC", conectores: "Dois conectores CCS2" }
+  };
+  function potKey(v) { return String(v || "").toLowerCase().replace(/\s|kw/g, "").replace(".", ","); }
+  function detectModelo(e) {
+    return Object.keys(ESTACOES).find(function (k) { return potKey(ESTACOES[k].potencia) === potKey(e.potencia) && ESTACOES[k].corrente === e.corrente; }) || "";
+  }
   function normalize(s) {
     const b = blank(s && s.numero);
     const out = Object.assign({}, b, s || {});
     if (out.tipo !== "analisador") out.tipo = "recarga";
     if (!out.uid) out.uid = newUid();
     ["rep", "site", "estacao", "retorno", "an"].forEach(function (k) { out[k] = Object.assign({}, b[k], (s && s[k]) || {}); });
+    if (!s || !s.estacao || s.estacao.modelo == null) out.estacao.modelo = detectModelo(out.estacao);
     if (!Array.isArray(out.modulos) || !out.modulos.length) out.modulos = b.modulos;
     out.itens = Object.assign({}, b.itens, (s && s.itens) || {});
     if (out.infraComumTexto === "Esta proposta trata da instalação da infraestrutura elétrica comum do prédio, que atende às áreas comuns e prepara as vagas de garagem para receber estações de recarga de veículos elétricos.") out.infraComumTexto = b.infraComumTexto;
@@ -471,7 +490,8 @@ details.sec[open] > summary::after { content: "–"; }
     const q = stationQty();
     const pot = String(state.estacao.potencia || "").trim();
     const cc = state.estacao.corrente === "CC";
-    return q + (q > 1 ? " estações de recarga" : " estação de recarga") + (cc ? " rápida" : "") + (pot ? " de " + pot : " de [potência]") + (cc ? " (CC)" : " (CA)");
+    const lin = String(state.estacao.linha || "").trim();
+    return q + (q > 1 ? " estações de recarga" : " estação de recarga") + (cc ? " rápida" : "") + (lin ? " " + lin : "") + (pot ? " de " + pot : " de [potência]") + (cc ? " (CC)" : " (CA)");
   }
   function moduleItems(m) {
     if (m.auto) {
@@ -591,7 +611,7 @@ details.sec[open] > summary::after { content: "–"; }
         '<div style="display:flex"><span style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#E6EEF9;border:1px solid #C9D8F0;font-size:12px;font-weight:600;letter-spacing:.04em;color:#1450A8">' + svg("leaf", 14, "#1450A8", 2) + 'Mobilidade elétrica · Energia limpa</span></div>' +
       '</div>' +
       '<div style="flex-grow:1.2"></div>' +
-      '<div style="display:flex;gap:20px;padding-bottom:14px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#5B6382">INTEGRADORA 5 ESTRELAS WEG</span>' + (state.smart ? '<span style="font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B6382">WEMOB® SMART CHARGING</span>' : '') + '</div>' +
+      '<div style="display:flex;gap:20px;padding-bottom:14px"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;color:#5B6382">INTEGRADORA 5 ESTRELAS WEG</span>' + (hasCharger() && String(state.estacao.linha || "").trim() ? '<span style="font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B6382">ESTAÇÕES ' + esc(String(state.estacao.linha).trim().toUpperCase()) + '</span>' : '') + (state.smart ? '<span style="font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B6382">WEMOB® SMART CHARGING</span>' : '') + '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid #DCE3EE;padding-top:22px">' +
         meta("PREPARADA PARA", who) + meta("PROPOSTA Nº", val(or(state.numero, "000"))) + meta("EMISSÃO", val(or(state.emissao, "dd/mm/aaaa"))) + meta("VALIDADE", val(or(state.validade, "validade"))) +
       '</div></div>';
@@ -633,7 +653,7 @@ details.sec[open] > summary::after { content: "–"; }
       state.infraComum
         ? ["Eletrocalhas nas áreas comuns", "Eletrocalhas instaladas nas áreas comuns da garagem, prontas para a futura passagem dos circuitos. Não inclui esperas nas vagas."]
         : hasCharger()
-        ? [(q > 1 ? "Estações de recarga" : "Estação de recarga") + (pot ? " " + esc(pot) : "") + " (" + (state.estacao.corrente === "CC" ? "CC" : "CA") + ")",
+        ? [(q > 1 ? "Estações de recarga" : "Estação de recarga") + (String(state.estacao.linha || "").trim() ? " " + esc(String(state.estacao.linha).trim()) : "") + (pot ? " " + esc(pot) : "") + " (" + (state.estacao.corrente === "CC" ? "CC" : "CA") + ")",
           (String(state.estacao.conectores || "").trim() ? esc(String(state.estacao.conectores).trim()) + ", em c" : "C") + "ircuito terminal exclusivo, com disjuntor no quadro e seccionamento junto à estação."]
         : ["Pontos de recarga preparados", "Circuito terminal exclusivo até cada ponto, com disjuntor no quadro, pronto para receber a estação de recarga."]
     ];
@@ -1083,6 +1103,8 @@ details.sec[open] > summary::after { content: "–"; }
       setPath(state, el.dataset.k, el.type === "checkbox" ? el.checked : el.value);
       if (el.dataset.k === "numero") state.numeroAuto = false;
       if (el.dataset.k === "carregador") renderMods();
+      if (el.dataset.k === "estacao.modelo" && ESTACOES[el.value]) { Object.assign(state.estacao, ESTACOES[el.value]); if (!String(state.estacao.linha || "").trim()) state.estacao.linha = "WEMOB WEG"; fillForm(); }
+      if ((el.dataset.k === "estacao.potencia" || el.dataset.k === "estacao.corrente") && state.estacao.modelo !== detectModelo(state.estacao)) { state.estacao.modelo = detectModelo(state.estacao); document.getElementById("f-mod").value = state.estacao.modelo; }
       if (el.dataset.k === "tipo") fillForm();
     } else if (el.dataset.grp != null) {
       state.itens.grupos[+el.dataset.grp][el.dataset.field] = el.value;
