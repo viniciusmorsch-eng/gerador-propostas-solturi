@@ -287,6 +287,9 @@ details.sec[open] > summary::after { content: "–"; }
         <div class="f"><label for="f-alim">Alimentação necessária</label><input id="f-alim" data-k="site.alimentacao" list="dl-alim" placeholder="Ex.: Trifásica 380 V"></div>
         <div class="f"><label for="f-pdisp">Potência disponível</label><input id="f-pdisp" data-k="site.potenciaDisp" placeholder="Ex.: 120 kW"></div>
         <div class="f"><label for="f-circ">Circuito necessário</label><input id="f-circ" data-k="site.circuito" placeholder="Ex.: 200 A"></div>
+        <p id="trafo-aviso" class="full" hidden style="margin:0;padding:10px 12px;border-radius:8px;background:rgba(217,106,24,.12);border:1px solid rgba(217,106,24,.45);color:#F2A66A;font-size:12.5px;line-height:1.45">Estações de corrente contínua operam com entrada em 380 V. Com rede de 220 V, o local precisa de um transformador elevador 220/380 V. A proposta mostra o aviso automaticamente.</p>
+        <div class="f"><label for="f-trafo">Transformador 220/380 V</label><input id="f-trafo" data-k="site.trafo" placeholder="Ex.: 150 kVA"></div>
+        <label class="check" for="f-trafoinc" style="align-self:end"><input type="checkbox" id="f-trafoinc" data-k="site.trafoIncluso"> Transformador incluso no valor</label>
         <div class="f"><label for="f-net">Conexão à internet</label><input id="f-net" data-k="site.internet" list="dl-net" placeholder="Ex.: Wi-Fi ou 4G"></div>
         <div class="f"><label for="f-pontos">Pontos de recarga</label><input id="f-pontos" data-k="site.pontos" placeholder="Ex.: 2 pontos"></div>
         <div class="f"><label for="f-tipo">Tipo de local</label><input id="f-tipo" data-k="site.tipo" list="dl-tipo"></div>
@@ -414,7 +417,7 @@ details.sec[open] > summary::after { content: "–"; }
       cliente: "",
       responsavel: "",
       rep: { nome: "", tel: "", cargo: "Representante comercial" },
-      site: { circuito: "", potenciaDisp: "", internet: "Wi-Fi ou 4G", tensao: "380", pontos: "", tipo: "Comercial", alimentacao: "Trifásica 380 V" },
+      site: { circuito: "", potenciaDisp: "", internet: "Wi-Fi ou 4G", tensao: "380", trafo: "", trafoIncluso: false, pontos: "", tipo: "Comercial", alimentacao: "Trifásica 380 V" },
       estacao: { qtd: "1", modelo: "", linha: "WEMOB WEG", potencia: "", corrente: "CA", conectores: "" },
       plataforma: "TUPI",
       smart: false,
@@ -460,6 +463,10 @@ details.sec[open] > summary::after { content: "–"; }
   }
   /* requisitos do local a partir do modelo e da quantidade (estimativa, editável) */
   const DISJ = [16, 20, 25, 32, 40, 50, 63, 70, 80, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 500, 630, 800, 1000, 1250, 1600];
+  const KVA = [15, 30, 45, 75, 112.5, 150, 225, 300, 500, 750, 1000, 1500, 2000];
+  function fmtKva(x) { return fmt(x, x % 1 ? 1 : 0) + " kVA"; }
+  function needTrafo() { return hasCharger() && !state.infraComum && state.estacao.corrente === "CC" && state.site.tensao === "220"; }
+  function trafoTxt() { return String(state.site.trafo || "").trim(); }
   function requisitos() {
     const e = state.estacao;
     const kw = parseFloat(String(e.potencia || "").replace(",", ".")); if (!(kw > 0)) return;
@@ -468,6 +475,8 @@ details.sec[open] > summary::after { content: "–"; }
     const amp = mono ? total * 1000 / 220 : total * 1000 / (Math.sqrt(3) * v * (e.corrente === "CC" ? 0.95 : 1));
     const disj = DISJ.find(function (d) { return d >= amp; }) || Math.ceil(amp / 100) * 100;
     state.site.alimentacao = mono ? (v === 380 ? "Monofásica 220 V" : "Bifásica 220 V") : "Trifásica " + v + " V";
+    if (e.corrente === "CC" && v === 220) { const kva = total * 1.1; state.site.trafo = fmtKva(KVA.find(function (x) { return x >= kva; }) || Math.ceil(kva / 100) * 100); }
+    else state.site.trafo = "";
     state.site.potenciaDisp = fmt(total, total % 1 ? 1 : 0) + " kW";
     state.site.circuito = disj + " A";
     state.site.pontos = (function () { const c = /dois/i.test(e.conectores || "") ? 2 : 1; const n = c * q; return n + (n > 1 ? " pontos" : " ponto"); })();
@@ -666,7 +675,10 @@ details.sec[open] > summary::after { content: "–"; }
     const q = stationQty();
     const pot = String(state.estacao.potencia || "").trim();
     const steps = [
-      ["Quadro geral do local", "Derivação por disjuntor dedicado, independente dos demais circuitos da instalação."],
+      needTrafo()
+        ? ["Quadro geral do local e transformador", "Transformador 220/380 V" + (trafoTxt() ? " de " + esc(trafoTxt()) : "") + " (" + (state.site.trafoIncluso ? "incluso" : "não incluso") + ") e disjuntor dedicado."]
+        : ["Quadro geral do local", "Derivação por disjuntor dedicado, independente dos demais circuitos da instalação."]
+    ].concat([
       state.smart ? ["Quadro Smart Charging", "Controlador de carga, transformadores de corrente no alimentador e comunicação OCPP com as estações."]
                   : ["Circuito " + (String(s.alimentacao || "").trim() ? esc(String(s.alimentacao).trim().replace(/^(\S+)/, function (w) { return w.toLowerCase().replace(/fásica$/, "fásico"); })) + " " : "") + "de alimentação", (state.infraComum ? "Alimentação do quadro de distribuição dos carregadores" : "Cabeamento dimensionado para " + (!hasCharger() ? "os pontos de recarga" : q > 1 ? "as estações" : "a estação")) + ", em circuito de " + or(s.circuito, "corrente") + "."],
       ["Quadro de distribuição dos carregadores (QDCV)", "Disjuntor geral, proteção diferencial, DPS classe II e barramentos de fase, neutro e terra."],
@@ -676,7 +688,7 @@ details.sec[open] > summary::after { content: "–"; }
         ? [(q > 1 ? "Estações de recarga" : "Estação de recarga") + (String(state.estacao.linha || "").trim() ? " " + esc(String(state.estacao.linha).trim()) : "") + (pot ? " " + esc(pot) : "") + " (" + (state.estacao.corrente === "CC" ? "CC" : "CA") + ")",
           (String(state.estacao.conectores || "").trim() ? esc(String(state.estacao.conectores).trim()) + ", em c" : "C") + "ircuito terminal exclusivo, com disjuntor no quadro e seccionamento junto à estação."]
         : ["Pontos de recarga preparados", "Circuito terminal exclusivo até cada ponto, com disjuntor no quadro, pronto para receber a estação de recarga."]
-    ];
+    ]);
     const stepsHtml = steps.map(function (st, i) {
       const last = i === steps.length - 1;
       return '<div class="step"><div class="step-rail"><span class="step-dot' + (last ? " on" : "") + '">' + (i + 1) + '</span>' + (last ? "" : '<span class="step-line"></span>') + '</div><div class="step-txt"' + (last ? ' style="padding-bottom:0"' : "") + '><b>' + st[0] + '</b><span class="pg-small">' + st[1] + '</span></div></div>';
@@ -689,7 +701,7 @@ details.sec[open] > summary::after { content: "–"; }
         '<div class="kv"><small>Potência disponível</small><b>' + or(String(s.potenciaDisp || "").trim() || (function () { const k = parseFloat(String(state.estacao.potencia || "").replace(",", ".")); return hasCharger() && k > 0 ? fmt(k * q, (k * q) % 1 ? 1 : 0) + " kW" : ""; })(), "potência") + '</b></div>' +
         '<div class="kv"><small>Circuito necessário</small><b>' + or(s.circuito, "corrente") + '</b></div>' +
         '<div class="kv"><small>Internet</small><b>' + or(s.internet, "conexão") + '</b></div>' +
-      '</div></div>' +
+      '</div>' + (needTrafo() ? '<p style="margin:0;padding-top:8px;border-top:1px solid #CBD4E3;font-size:12.5px;line-height:1.4;color:#B5560C"><b style="font-weight:600">Atenção:</b> estações de corrente contínua operam em 380 V. Com rede de 220 V, o local precisa de transformador elevador 220/380 V' + (trafoTxt() ? ' de ' + esc(trafoTxt()) : '') + ', ' + (state.site.trafoIncluso ? 'incluso nesta proposta.' : 'não incluso nesta proposta.') + '</p>' : '') + '</div>' +
       '<div style="display:flex;flex-direction:column;gap:12px"><span class="pg-label">ARQUITETURA PROPOSTA</span><div>' + stepsHtml + '</div></div>' +
       '<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #DCE3EE;padding-top:18px"><span class="pg-label">PROTEÇÕES E CRITÉRIOS</span><div class="grid2" style="row-gap:14px">' +
         prot("Proteção diferencial", "DR 30 mA tipo B por ponto, ou tipo A com detecção de corrente contínua (RDC-DD) integrada ao carregador. Tipo AC não é admitido.") +
@@ -697,7 +709,7 @@ details.sec[open] > summary::after { content: "–"; }
         prot("Aterramento", "Interligação ao sistema de aterramento existente, com barra de equipotencialização no quadro dos carregadores.") +
         prot("Normas aplicáveis", "ABNT NBR 5410, ABNT NBR 17019 e normas regulamentadoras aplicáveis à execução dos serviços.") +
       '</div></div>',
-      n, t, null, "gap:20px;padding-top:26px");
+      n, t, null, needTrafo() ? "gap:15px;padding-top:22px" : "gap:20px;padding-top:26px");
   }
 
   function pGestao(sec, n, t) {
@@ -1114,6 +1126,7 @@ details.sec[open] > summary::after { content: "–"; }
       const v = getPath(state, el.dataset.k);
       if (el.type === "checkbox") el.checked = !!v; else el.value = v == null ? "" : v;
     });
+    document.getElementById("trafo-aviso").hidden = !needTrafo();
     renderMods();
     renderGrupos();
   }
@@ -1124,7 +1137,8 @@ details.sec[open] > summary::after { content: "–"; }
       if (el.dataset.k === "numero") state.numeroAuto = false;
       if (el.dataset.k === "carregador") renderMods();
       if (el.dataset.k === "estacao.modelo" && ESTACOES[el.value]) { Object.assign(state.estacao, ESTACOES[el.value]); if (!String(state.estacao.linha || "").trim()) state.estacao.linha = "WEMOB WEG"; requisitos(); fillForm(); }
-      if ((el.dataset.k === "estacao.qtd" && ESTACOES[state.estacao.modelo]) || el.dataset.k === "site.tensao") { requisitos(); ["f-alim", "f-pdisp", "f-circ", "f-pontos"].forEach(function (id) { const f = document.getElementById(id); f.value = getPath(state, f.dataset.k) || ""; }); }
+      document.getElementById("trafo-aviso").hidden = !needTrafo();
+      if ((el.dataset.k === "estacao.qtd" && ESTACOES[state.estacao.modelo]) || el.dataset.k === "site.tensao") { requisitos(); ["f-alim", "f-pdisp", "f-circ", "f-pontos", "f-trafo"].forEach(function (id) { const f = document.getElementById(id); f.value = getPath(state, f.dataset.k) || ""; }); }
       if ((el.dataset.k === "estacao.potencia" || el.dataset.k === "estacao.corrente") && state.estacao.modelo !== detectModelo(state.estacao)) { state.estacao.modelo = detectModelo(state.estacao); document.getElementById("f-mod").value = state.estacao.modelo; }
       if (el.dataset.k === "tipo") fillForm();
     } else if (el.dataset.grp != null) {
